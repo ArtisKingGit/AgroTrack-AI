@@ -346,6 +346,13 @@ class CommodityCategory(str, Enum):
     CASH_CROPS = "Cash Crops / Industrial"
     OTHER = "Other"
 
+    @classmethod
+    def _missing_(cls, value):
+        s = str(value).strip().lower()
+        if "cash" in s or "export" in s or "industrial" in s:
+            return cls.CASH_CROPS
+        return None
+
 
 class PriceType(str, Enum):
     WHOLESALE = "wholesale"
@@ -356,6 +363,15 @@ class PriceType(str, Enum):
 class CollectionMethod(str, Enum):
     MANUAL = "manual"
     IMPORTED = "imported"
+
+    @classmethod
+    def _missing_(cls, value):
+        s = str(value).lower()
+        if "import" in s:
+            return cls.IMPORTED
+        if "manual" in s:
+            return cls.MANUAL
+        return None
 
 
 class VerificationStatus(str, Enum):

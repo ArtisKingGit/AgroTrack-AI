@@ -25,3 +25,9 @@ backend/.env
 *firebase-adminsdk*.json
 backend/serviceAccountKey.json
 backend/*firebase*.json
+
+# Runtime Database Files
+backend/data/*.db*
+*.db
+*.db-wal
+*.db-shm

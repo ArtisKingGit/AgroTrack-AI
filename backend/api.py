@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from datetime import datetime
 from .models import (
     Role,
     Permission,
@@ -19,9 +20,23 @@ from .models import (
     ModuleStatus,
     PlatformOverview
 )
-from .security import get_current_user, require_roles, require_permission
+from .security import get_current_user, require_roles, require_permission, ENVIRONMENT, ALLOW_DEV_MOCK_AUTH
+from backend.db.database import get_record, list_records, save_record, init_db, seed_default_data
+
+init_db()
+seed_default_data()
 
 router = APIRouter(prefix="/api/v1", tags=["AgroTrack AI Platform"])
+
+@router.get("/config")
+async def get_client_config():
+    """Returns client runtime configuration and security mode flags."""
+    return {
+        "environment": ENVIRONMENT,
+        "allowDevMockAuth": ALLOW_DEV_MOCK_AUTH,
+        "version": "1.0.0",
+        "platform": "AgroTrack AI"
+    }
 
 # ── In-Memory Default Data (Non-destructive, demo/default organisation) ───────
 CURRENT_ORG = Organisation(
@@ -211,7 +226,18 @@ async def list_roles():
 
 @router.get("/organisations/current", response_model=Organisation)
 async def get_current_organisation(current_user: UserProfile = Depends(get_current_user)):
-    """Returns current active organisation details."""
+    """Returns current active organisation details from persistent store."""
+    org_doc = get_record("organisations", current_user.defaultOrgId)
+    if org_doc:
+        return Organisation(
+            id=org_doc["id"],
+            name=org_doc.get("name", "Organisation"),
+            code=org_doc.get("code", "ORG"),
+            tier=org_doc.get("tier", "enterprise"),
+            country=org_doc.get("country", "Kenya"),
+            currency=org_doc.get("currency", "KES"),
+            createdAt=org_doc.get("createdAt", "2026-01-15T08:00:00Z")
+        )
     return CURRENT_ORG
 
 
@@ -220,9 +246,22 @@ async def list_organisation_members(
     current_user: UserProfile = Depends(require_roles([Role.ORGANISATION_ADMIN, Role.PROJECT_MANAGER]))
 ):
     """
-    Lists members of the current organisation.
+    Lists members of the current organisation from persistent store.
     Enforces Role Check: Organisation Administrator or Project Manager only.
     """
+    members = list_records("organisation_members", org_id=current_user.defaultOrgId)
+    if members:
+        return [
+            OrganisationMember(
+                userId=m.get("userId", m.get("id")),
+                name=m.get("name", "Member"),
+                email=m.get("email", ""),
+                role=m.get("role", "Viewer"),
+                status=m.get("status", "active"),
+                joinedAt=m.get("joinedAt", m.get("createdAt", ""))
+            )
+            for m in members
+        ]
     return DEFAULT_MEMBERS
 
 
@@ -238,16 +277,34 @@ async def add_organisation_member(
     current_user: UserProfile = Depends(require_roles([Role.ORGANISATION_ADMIN]))
 ):
     """
-    Invites/adds a member to the organisation.
+    Invites/adds a member to the organisation and persists to SQLite.
     Enforces Strict Role Check: Organisation Administrator ONLY.
     """
+    existing = list_records("organisation_members", org_id=current_user.defaultOrgId)
+    uid = f"usr_new_{len(existing) + 1:03d}"
+    joined_now = datetime.utcnow().isoformat() + "Z"
+    
+    role_str = request.role.value if hasattr(request.role, "value") else str(request.role)
+    doc = {
+        "id": uid,
+        "orgId": current_user.defaultOrgId,
+        "userId": uid,
+        "name": request.name,
+        "email": request.email,
+        "role": role_str,
+        "status": "active",
+        "joinedAt": joined_now,
+        "createdAt": joined_now
+    }
+    save_record("organisation_members", doc, org_id=current_user.defaultOrgId)
+
     new_member = OrganisationMember(
-        userId=f"usr_new_{len(DEFAULT_MEMBERS) + 1:03d}",
+        userId=uid,
         name=request.name,
         email=request.email,
         role=request.role,
         status="active",
-        joinedAt="2026-11-03T14:00:00Z"
+        joinedAt=joined_now
     )
     DEFAULT_MEMBERS.append(new_member)
     return new_member

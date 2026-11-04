@@ -29,3 +29,12 @@ def auth_headers():
         token = mapping.get(role, "mock-token-viewer")
         return {"Authorization": f"Bearer {token}"}
     return _headers_for
+
+from backend.db.database import reset_db
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_db():
+    """Resets the persistent database to clean default seed state at test session start."""
+    reset_db()
+    yield

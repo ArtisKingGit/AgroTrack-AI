@@ -530,293 +530,27 @@ def _validate_gps(location: Optional[Dict[str, Any]]) -> None:
             )
 
 
-# Demo farmers partitioned strictly by organisation ID
-TENANT_FARMERS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "frmr_982103",
-            "orgId": "org_greenvalley_01",
-            "farmerCode": "FM-GV-001",
-            "nationalId": "24981023",
-            "firstName": "Joseph",
-            "lastName": "Kamau",
-            "phone": "+254722998877",
-            "gender": "male",
-            "location": {
-                "county": "Nakuru",
-                "subCounty": "Rongai",
-                "ward": "Solai",
-                "village": "Milmet",
-                "latitude": -0.0245,
-                "longitude": 36.1432
-            },
-            "assignedFieldOfficerId": "usr_field_003",
-            "assignedFieldOfficerName": "Amina Otieno",
-            "enrolledProjectIds": ["proj_climate_resilience_2026"],
-            "totalAcreage": 3.5,
-            "status": "active",
-            "consentGiven": True,
-            "registeredAt": "2026-02-10T11:15:00Z"
-        },
-        {
-            "id": "frmr_982104",
-            "orgId": "org_greenvalley_01",
-            "farmerCode": "FM-GV-002",
-            "nationalId": "28491024",
-            "firstName": "Mary",
-            "lastName": "Wambui",
-            "phone": "+254733112233",
-            "gender": "female",
-            "location": {
-                "county": "Nakuru",
-                "subCounty": "Rongai",
-                "ward": "Rongai Central",
-                "village": "Kampi ya Moto",
-                "latitude": -0.0152,
-                "longitude": 36.0825
-            },
-            "assignedFieldOfficerId": "usr_field_003",
-            "assignedFieldOfficerName": "Amina Otieno",
-            "enrolledProjectIds": ["proj_climate_resilience_2026"],
-            "totalAcreage": 1.2,
-            "status": "active",
-            "consentGiven": True,
-            "registeredAt": "2026-03-01T08:30:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "frmr_hl_771",
-            "orgId": "org_highland_02",
-            "farmerCode": "FM-HL-001",
-            "nationalId": "19823456",
-            "firstName": "Kiprono",
-            "lastName": "Langat",
-            "phone": "+254710445566",
-            "gender": "male",
-            "location": {
-                "county": "Kericho",
-                "subCounty": "Ainamoi",
-                "ward": "Kipchimchim",
-                "village": "Chagaik",
-                "latitude": -0.3689,
-                "longitude": 35.2863
-            },
-            "assignedFieldOfficerId": "usr_hl_10",
-            "assignedFieldOfficerName": "Highland Field Team",
-            "enrolledProjectIds": [],
-            "totalAcreage": 12.0,
-            "status": "active",
-            "consentGiven": True,
-            "registeredAt": "2026-01-10T09:00:00Z"
-        }
-    ]
-}
+# ── Multi-Tenant Persistent SQLite Store (WAL Mode) ──────────────────────────
+from backend.db.database import (
+    DbTenantCollection,
+    save_record,
+    get_record,
+    list_records,
+    delete_record,
+    count_records,
+    init_db,
+    seed_default_data,
+)
 
-# Demo activities partitioned strictly by organisation ID
-TENANT_ACTIVITIES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "act_gv_001",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_101",
-            "farmerId": "frmr_982103",
-            "farmName": "Solai North Maize Plot",
-            "farmerName": "Joseph Kamau",
-            "activityType": "farm_visit",
-            "activityDate": "2026-10-25",
-            "responsibleUserId": "usr_field_003",
-            "responsibleUserName": "Amina Otieno",
-            "notes": "Initial seasonal monitoring visit. Verified drip line pressure and uniform emergence.",
-            "metrics": {"soilMoisture": "Adequate", "canopyHealth": "Good"},
-            "observations": ["Leaves looking vibrant", "No stem borer damage detected"],
-            "createdAt": "2026-10-25T10:00:00Z"
-        },
-        {
-            "id": "act_gv_002",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_101",
-            "farmerId": "frmr_982103",
-            "farmName": "Solai North Maize Plot",
-            "farmerName": "Joseph Kamau",
-            "activityType": "crop_inspection",
-            "activityDate": "2026-10-28",
-            "responsibleUserId": "usr_field_003",
-            "responsibleUserName": "Amina Otieno",
-            "notes": "Scouted lower leaves after morning fog. Detected early Common Rust pustules on 3 stalks.",
-            "metrics": {"scannedStalks": 50, "infectedStalks": 3},
-            "observations": ["Prescribed protective copper fungicide spray"],
-            "createdAt": "2026-10-28T09:45:00Z"
-        },
-        {
-            "id": "act_gv_003",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_102",
-            "farmerId": "frmr_982104",
-            "farmName": "Rongai Tomato Greenhouse",
-            "farmerName": "Mary Wambui",
-            "activityType": "fertilizer_application",
-            "activityDate": "2026-11-01",
-            "responsibleUserId": "usr_field_003",
-            "responsibleUserName": "Amina Otieno",
-            "notes": "Supervised foliar calcium & potassium application to prevent blossom end rot.",
-            "metrics": {"product": "EasyGro Calcium", "volumeLitres": 20},
-            "observations": ["Pruning and staking completed"],
-            "createdAt": "2026-11-01T14:30:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "act_hl_001",
-            "orgId": "org_highland_02",
-            "farmId": "farm_hl_201",
-            "farmerId": "frmr_hl_771",
-            "farmName": "Kericho Highland Tea Estate",
-            "farmerName": "Kiprono Langat",
-            "activityType": "harvest",
-            "activityDate": "2026-10-15",
-            "responsibleUserId": "usr_hl_10",
-            "responsibleUserName": "Highland Field Team",
-            "notes": "Routine two-leaves-and-a-bud plucking cycle completed.",
-            "metrics": {"pluckedWeightKg": 1420.0, "qualityGrade": "A"},
-            "observations": ["Flushing rate optimal"],
-            "createdAt": "2026-10-15T12:00:00Z"
-        }
-    ]
-}
+init_db()
+seed_default_data()
 
-# Demo data partitioned strictly by organisation ID
-TENANT_FARMS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "farm_gv_101",
-            "orgId": "org_greenvalley_01",
-            "farmerId": "frmr_982103",
-            "name": "Solai North Maize Plot",
-            "size": 3.5,
-            "unit": "acres",
-            "crop": "Maize",
-            "soil": "Loamy",
-            "irrigation": "Drip",
-            "waterSource": "Borehole",
-            "status": "Growing",
-            "plantingDate": "2026-03-15",
-            "budget": 75000.0,
-            "soilNutrients": {"n": 48.0, "p": 32.0, "k": 28.0},
-            "location": {"name": "Solai, Nakuru", "latitude": -0.0248, "longitude": 36.1435}
-        },
-        {
-            "id": "farm_gv_102",
-            "orgId": "org_greenvalley_01",
-            "farmerId": "frmr_982104",
-            "name": "Rongai Tomato Greenhouse",
-            "size": 1.2,
-            "unit": "acres",
-            "crop": "Tomato",
-            "soil": "Clay Loam",
-            "irrigation": "Drip",
-            "waterSource": "River",
-            "status": "Growing",
-            "plantingDate": "2026-04-01",
-            "budget": 120000.0,
-            "soilNutrients": {"n": 42.0, "p": 45.0, "k": 50.0},
-            "location": {"name": "Rongai, Nakuru", "latitude": -0.0150, "longitude": 36.0820}
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "farm_hl_201",
-            "orgId": "org_highland_02",
-            "farmerId": "frmr_hl_771",
-            "name": "Kericho Highland Tea Estate",
-            "size": 12.0,
-            "unit": "acres",
-            "crop": "Tea",
-            "soil": "Volcanic Red",
-            "irrigation": "Rain-fed",
-            "waterSource": "Rain",
-            "status": "Growing",
-            "plantingDate": "2026-01-10",
-            "budget": 350000.0,
-            "soilNutrients": {"n": 55.0, "p": 40.0, "k": 35.0},
-            "location": {"name": "Kericho", "latitude": -0.3689, "longitude": 35.2863}
-        }
-    ]
-}
-
-TENANT_EXPENSES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "exp_gv_01",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_101",
-            "category": "Seeds",
-            "amount": 12500.0,
-            "date": "2026-03-12",
-            "note": "Certified hybrid maize seed (SC 627)"
-        },
-        {
-            "id": "exp_gv_02",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_101",
-            "category": "Fertilizer",
-            "amount": 18000.0,
-            "date": "2026-03-15",
-            "note": "Basal planting DAP 18:46:0"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "exp_hl_01",
-            "orgId": "org_highland_02",
-            "farmId": "farm_hl_201",
-            "category": "Labor",
-            "amount": 45000.0,
-            "date": "2026-02-15",
-            "note": "Quarterly tea pruning labor"
-        }
-    ]
-}
-
-TENANT_SCANS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "scan_gv_01",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_101",
-            "crop": "Maize",
-            "disease": "Common Rust",
-            "confidence": "92.4%",
-            "severity_percentage": 4.5,
-            "severity_level": "Mild (Early Stage)",
-            "time": "2026-10-28T09:30:00Z"
-        },
-        {
-            "id": "scan_gv_02",
-            "orgId": "org_greenvalley_01",
-            "farmId": "farm_gv_102",
-            "crop": "Tomato",
-            "disease": "Tomato Early Blight",
-            "confidence": "94.8%",
-            "severity_percentage": 8.2,
-            "severity_level": "Moderate",
-            "time": "2026-11-01T11:15:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "scan_hl_01",
-            "orgId": "org_highland_02",
-            "farmId": "farm_hl_201",
-            "crop": "Tea",
-            "disease": "Healthy",
-            "confidence": "98.1%",
-            "severity_percentage": 0.0,
-            "severity_level": "None (Healthy)",
-            "time": "2026-10-15T08:00:00Z"
-        }
-    ]
-}
+# Persistent collections backed by SQLite in WAL mode
+TENANT_FARMERS = DbTenantCollection("farmers")
+TENANT_FARMS = DbTenantCollection("farms")
+TENANT_ACTIVITIES = DbTenantCollection("field_activities")
+TENANT_EXPENSES = DbTenantCollection("expenses")
+TENANT_SCANS = DbTenantCollection("scans")
 
 
 # ── Farmer Management ────────────────────────────────────────────────────────
@@ -1057,6 +791,7 @@ def update_farmer(org_id: str, farmer_id: str, updates: Dict[str, Any]) -> Dict[
             farmer["assignedFieldOfficerName"] = None
             
     farmer["updatedAt"] = datetime.now().isoformat()
+    save_record("farmers", farmer, org_id=org_id)
     return farmer
 
 
@@ -1065,6 +800,7 @@ def archive_farmer(org_id: str, farmer_id: str) -> Dict[str, Any]:
     farmer = get_farmer_by_id(org_id, farmer_id)
     farmer["status"] = "archived"
     farmer["updatedAt"] = datetime.now().isoformat()
+    save_record("farmers", farmer, org_id=org_id)
     return {"message": f"Farmer '{farmer_id}' has been archived successfully.", "farmer": farmer}
 
 
@@ -1073,6 +809,7 @@ def restore_farmer(org_id: str, farmer_id: str) -> Dict[str, Any]:
     farmer = get_farmer_by_id(org_id, farmer_id)
     farmer["status"] = "active"
     farmer["updatedAt"] = datetime.now().isoformat()
+    save_record("farmers", farmer, org_id=org_id)
     return {"message": f"Farmer '{farmer_id}' has been restored to active status.", "farmer": farmer}
 
 
@@ -1123,6 +860,7 @@ def create_farm(org_id: str, farm_data: Dict[str, Any]) -> Dict[str, Any]:
         farmer = get_farmer_by_id(org_id, farmer_id)
         farm_size = float(farm_data.get("size", 1.0))
         farmer["totalAcreage"] = round(float(farmer.get("totalAcreage", 0.0)) + farm_size, 2)
+        save_record("farmers", farmer, org_id=org_id)
     else:
         farm_id_temp = f"farm_{org_id[:3]}_{len(TENANT_FARMS[org_id]) + 101}"
         farmer_id = f"frmr_{farm_id_temp}"
@@ -1164,12 +902,14 @@ def update_farm(org_id: str, farm_id: str, updates: Dict[str, Any]) -> Dict[str,
     for key, val in updates.items():
         if key not in ["id", "orgId"]:
             farm[key] = val
+    save_record("farms", farm, org_id=org_id)
     return farm
 
 
 def delete_farm(org_id: str, farm_id: str) -> Dict[str, Any]:
     """Deletes farm record and associated scoped expenses & activities (preventing orphans)."""
     farm = get_farm_by_id(org_id, farm_id)
+    delete_record("farms", farm_id, org_id=org_id)
     TENANT_FARMS[org_id] = [f for f in TENANT_FARMS[org_id] if f["id"] != farm_id]
     
     # Update farmer's acreage
@@ -1178,16 +918,19 @@ def delete_farm(org_id: str, farm_id: str) -> Dict[str, Any]:
         try:
             farmer = get_farmer_by_id(org_id, farmer_id)
             farmer["totalAcreage"] = max(0.0, round(float(farmer.get("totalAcreage", 0.0)) - float(farm.get("size", 0.0)), 2))
+            save_record("farmers", farmer, org_id=org_id)
         except Exception:
             pass
             
     # Cascade delete expenses to maintain referential integrity
-    if org_id in TENANT_EXPENSES:
-        TENANT_EXPENSES[org_id] = [e for e in TENANT_EXPENSES[org_id] if e.get("farmId") != farm_id]
+    for exp in list_records("expenses", org_id=org_id):
+        if exp.get("farmId") == farm_id:
+            delete_record("expenses", exp["id"], org_id=org_id)
         
     # Cascade delete activities
-    if org_id in TENANT_ACTIVITIES:
-        TENANT_ACTIVITIES[org_id] = [a for a in TENANT_ACTIVITIES[org_id] if a.get("farmId") != farm_id]
+    for act in list_records("field_activities", org_id=org_id):
+        if act.get("farmId") == farm_id:
+            delete_record("field_activities", act["id"], org_id=org_id)
         
     return {"message": f"Farm '{farm_id}' and associated records deleted successfully."}
 
@@ -1536,6 +1279,7 @@ def delete_expense(org_id: str, expense_id: str) -> Dict[str, Any]:
     if not found:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Expense '{expense_id}' not found.")
         
+    delete_record("expenses", expense_id, org_id=org_id)
     TENANT_EXPENSES[org_id] = [e for e in expenses if e["id"] != expense_id]
     return {"message": f"Expense '{expense_id}' deleted successfully."}
 

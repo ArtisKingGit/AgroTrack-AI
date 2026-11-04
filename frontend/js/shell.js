@@ -1,16 +1,23 @@
 /**
  * AgroTrack AI Shared Shell & Navigation Controller
  * Manages the persistent sidebar, topbar, user profile, role switcher, and auth state.
+ * Preserves authentic AgroFast visual identity and colours.
+ * Development-only role switcher gating (hidden in production mode).
  */
 
 (function () {
   const ROLES = [
-    { id: "admin", label: "Organisation Administrator", badgeColor: "#10b981", token: "mock-token-admin", name: "Sarah Mwangi" },
+    { id: "admin", label: "Organisation Administrator", badgeColor: "#22c55e", token: "mock-token-admin", name: "Sarah Mwangi" },
     { id: "manager", label: "Project Manager", badgeColor: "#14b8a6", token: "mock-token-manager", name: "David Kiprop" },
     { id: "field", label: "Field Officer", badgeColor: "#38bdf8", token: "mock-token-field", name: "Amina Otieno" },
     { id: "analyst", label: "Analyst", badgeColor: "#a855f7", token: "mock-token-analyst", name: "Brian Njoroge" },
     { id: "viewer", label: "Viewer", badgeColor: "#94a3b8", token: "mock-token-viewer", name: "Grace Wanjiku" }
   ];
+
+  let clientConfig = {
+    environment: "development",
+    allowDevMockAuth: true
+  };
 
   // Retrieve current active role from localStorage or default to Admin
   function getActiveRole() {
@@ -20,6 +27,10 @@
   }
 
   function setActiveRole(roleId) {
+    if (!clientConfig.allowDevMockAuth) {
+      console.warn("Role switching is disabled in production mode.");
+      return;
+    }
     const found = ROLES.find(r => r.id === roleId);
     if (found) {
       localStorage.setItem("agrotrack-active-role", found.id);
@@ -57,7 +68,7 @@
             <i class="fas fa-building"></i>
           </div>
           <div class="org-info">
-            <div class="org-name">GreenValley AgTech</div>
+            <div class="org-name" id="shellOrgName">GreenValley AgTech</div>
             <div class="org-tier"><i class="fas fa-shield-halved"></i> Enterprise Tier</div>
           </div>
         </div>
@@ -107,7 +118,7 @@
 
       <div class="sidebar-footer">
         <div class="user-profile-widget">
-          <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentRole.name)}&background=0f392b&color=22c55e" alt="Profile" class="user-avatar" id="shellUserAvatar">
+          <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentRole.name)}&background=020617&color=22c55e" alt="Profile" class="user-avatar" id="shellUserAvatar">
           <div class="user-meta">
             <div class="user-name" id="shellUserName">${currentRole.name}</div>
             <span class="user-role-badge" style="background: rgba(34, 197, 94, 0.15); color: ${currentRole.badgeColor};">${currentRole.label}</span>
@@ -144,6 +155,27 @@
 
     const title = pageTitles[activePage] || "AgroTrack AI";
 
+    let roleControlHtml = "";
+    if (clientConfig.allowDevMockAuth) {
+      // Development mode: role switcher enabled for testing
+      roleControlHtml = `
+        <label for="roleSwitcher" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-user-shield"></i> <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">DEV</span> Role:
+        </label>
+        <select id="roleSwitcher" class="role-switcher-select" title="Switch active role for development testing">
+          ${ROLES.map(r => `<option value="${r.id}" ${r.id === currentRole.id ? "selected" : ""}>${r.label}</option>`).join("")}
+        </select>
+      `;
+    } else {
+      // Production mode: strictly read-only authenticated role display
+      roleControlHtml = `
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); background: rgba(15, 23, 42, 0.7); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);">
+          <i class="fas fa-shield-halved" style="color: #22c55e;"></i>
+          <span style="font-weight: 600; color: #f1f5f9;">${currentRole.label}</span>
+        </div>
+      `;
+    }
+
     topbarEl.className = "app-topbar";
     topbarEl.innerHTML = `
       <div class="topbar-left">
@@ -160,12 +192,7 @@
           <i class="fas fa-circle-check"></i> <span>Online</span>
         </div>
 
-        <label for="roleSwitcher" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-user-shield"></i> Role:
-        </label>
-        <select id="roleSwitcher" class="role-switcher-select" title="Switch active role for testing and preview">
-          ${ROLES.map(r => `<option value="${r.id}" ${r.id === currentRole.id ? "selected" : ""}>${r.label}</option>`).join("")}
-        </select>
+        ${roleControlHtml}
 
         <button class="topbar-action-btn" title="Notifications" id="notifyBellBtn">
           <i class="fas fa-bell"></i>
@@ -173,7 +200,7 @@
       </div>
     `;
 
-    // Role switcher listener
+    // Role switcher listener (if in dev mode)
     const switcher = document.getElementById("roleSwitcher");
     if (switcher) {
       switcher.onchange = (e) => setActiveRole(e.target.value);
@@ -189,8 +216,20 @@
     }
   }
 
+  async function fetchClientConfig() {
+    try {
+      const resp = await fetch("/api/v1/config");
+      if (resp.ok) {
+        clientConfig = await resp.json();
+      }
+    } catch (_) {
+      // Offline fallback: keep current config
+    }
+  }
+
   // Initialize Shell on DOM ready
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    await fetchClientConfig();
     const activePage = getCurrentPage();
     const currentRole = getActiveRole();
     renderSidebar(activePage, currentRole);
@@ -204,6 +243,7 @@
   window.AgroTrack = {
     getActiveRole,
     setActiveRole,
-    getAuthToken: () => localStorage.getItem("agrotrack-auth-token") || getActiveRole().token
+    getAuthToken: () => localStorage.getItem("agrotrack-auth-token") || getActiveRole().token,
+    getConfig: () => clientConfig
   };
 })();

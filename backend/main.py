@@ -7,7 +7,7 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Request
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
@@ -19,7 +19,9 @@ from pydantic import BaseModel
 # pyrefly: ignore [missing-import]
 import uvicorn
 import os
+import time
 import asyncio
+from collections import defaultdict
 # pyrefly: ignore [missing-import]
 import google.generativeai as genai
 # pyrefly: ignore [missing-import]
@@ -112,7 +114,30 @@ except ImportError:
 except Exception as e:
     print(f"[!] Firebase Admin initialization notice: {e}")
 
+# Initialize SQLite database (WAL mode) and seed initial datasets if empty
+try:
+    from backend.db.database import init_db, seed_default_data
+    init_db()
+    seed_default_data()
+except Exception as e:
+    print(f"[!] SQLite initialization notice: {e}")
+
 from typing import List, Optional, Any
+
+# Sliding-window Rate Limiter (30 requests/min per client IP for AI/compute endpoints)
+RATE_LIMIT_WINDOW_SECONDS = 60.0
+RATE_LIMIT_MAX_REQUESTS = 30
+_client_rate_tracker = defaultdict(list)
+RATE_LIMIT_STORE = _client_rate_tracker
+
+def check_rate_limit(client_ip: str) -> bool:
+    now = time.time()
+    timestamps = _client_rate_tracker[client_ip]
+    _client_rate_tracker[client_ip] = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
+    if len(_client_rate_tracker[client_ip]) >= RATE_LIMIT_MAX_REQUESTS:
+        return False
+    _client_rate_tracker[client_ip].append(now)
+    return True
 
 class ChatMessage(BaseModel):
     role: str
@@ -124,11 +149,19 @@ class ChatRequest(BaseModel):
     scans: Optional[List[Any]] = None
     farms: Optional[List[Any]] = None
 
-# CORS Configuration (Production Hardened with Configurable Origins)
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
-allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
-if not allowed_origins:
-    allowed_origins = ["*"]
+# CORS Configuration (Production Hardened with Explicit Allowed Origins)
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+IS_PRODUCTION = (ENVIRONMENT == "production")
+
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS") or os.getenv("CORS_ALLOWED_ORIGINS", "")
+if IS_PRODUCTION:
+    raw_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+    allowed_origins = [o for o in raw_origins if o != "*"]
+    if not allowed_origins:
+        # Safe default origins for production (prevents wildcard with credentials)
+        allowed_origins = ["http://localhost:5500", "http://127.0.0.1:5500"]
+else:
+    allowed_origins = [o.strip() for o in (allowed_origins_env or "*").split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
@@ -152,7 +185,11 @@ MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
 
 @app.post("/predict")
-async def predict(image: UploadFile = File(...)):
+async def predict(request_obj: Request, image: UploadFile = File(...)):
+    client_ip = request_obj.client.host if request_obj.client else "unknown"
+    if not check_rate_limit(client_ip):
+        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Please wait a moment before sending more diagnostic requests."})
+
     print(f"Received image: {image.filename} ({image.content_type})")
 
     if image.content_type not in ALLOWED_IMAGE_TYPES:
@@ -185,7 +222,11 @@ async def predict(image: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"error": "Could not analyze this image. Please try a different photo."})
 
 @app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request_obj: Request, request: ChatRequest):
+    client_ip = request_obj.client.host if request_obj.client else "unknown"
+    if not check_rate_limit(client_ip):
+        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Please wait a moment before sending more chat messages."})
+
     if not GEMINI_API_KEY:
         return JSONResponse(status_code=500, content={"error": "Gemini API Key is not configured. Please add GEMINI_API_KEY to your backend/.env file."})
     

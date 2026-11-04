@@ -55,438 +55,24 @@ def calculate_normalized_price_per_kg(price: float, unit: str) -> float:
     return round(price / factor, 2)
 
 
-# ── In-Memory Tenant Multi-Tenant Stores ─────────────────────────────────────
+# ── Multi-Tenant Persistent SQLite Store (WAL Mode) ──────────────────────────
+from backend.db.database import (
+    DbTenantCollection,
+    save_record,
+    get_record,
+    list_records,
+    delete_record,
+    count_records,
+    init_db,
+    seed_default_data,
+)
 
-TENANT_COMMODITIES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "cmd_gv_maize",
-            "orgId": "org_greenvalley_01",
-            "name": "White Maize",
-            "code": "CMD-MZ-01",
-            "category": CommodityCategory.CEREALS_GRAINS.value,
-            "standardUnit": "90kg bag",
-            "supportedUnits": ["90kg bag", "50kg bag", "kg", "Ton"],
-            "varieties": ["H614D", "Duma 43", "Pannar 691"],
-            "description": "Primary staple cereal grown across Rift Valley & Western Kenya. Grade 1 standard moisture < 13.5%.",
-            "isActive": True,
-            "createdAt": "2026-01-15T08:00:00Z"
-        },
-        {
-            "id": "cmd_gv_beans",
-            "orgId": "org_greenvalley_01",
-            "name": "Rosecoco Beans",
-            "code": "CMD-BN-02",
-            "category": CommodityCategory.LEGUMES_PULSES.value,
-            "standardUnit": "90kg bag",
-            "supportedUnits": ["90kg bag", "50kg bag", "kg"],
-            "varieties": ["Rosecoco (GLP-2)", "Mwitemania", "Yellow Beans"],
-            "description": "Red-mottled dry grain legumes. High domestic demand across commercial urban centres.",
-            "isActive": True,
-            "createdAt": "2026-01-16T09:00:00Z"
-        },
-        {
-            "id": "cmd_gv_tomato",
-            "orgId": "org_greenvalley_01",
-            "name": "Fresh Tomato",
-            "code": "CMD-TM-03",
-            "category": CommodityCategory.HORTICULTURE_VEGETABLES.value,
-            "standardUnit": "Crate (64kg)",
-            "supportedUnits": ["Crate (64kg)", "kg", "Box"],
-            "varieties": ["Roma VF", "Anna F1", "Kilele F1"],
-            "description": "Determinate and indeterminate fresh table tomatoes subject to seasonal cold-chain price swings.",
-            "isActive": True,
-            "createdAt": "2026-01-18T10:30:00Z"
-        },
-        {
-            "id": "cmd_gv_potato",
-            "orgId": "org_greenvalley_01",
-            "name": "Irish Potato",
-            "code": "CMD-PT-04",
-            "category": CommodityCategory.ROOTS_TUBERS.value,
-            "standardUnit": "50kg bag",
-            "supportedUnits": ["50kg bag", "100kg bag", "kg"],
-            "varieties": ["Shangi", "Dutch Robijn", "Unica"],
-            "description": "Ware potatoes for domestic consumption and fast-food processing.",
-            "isActive": True,
-            "createdAt": "2026-01-20T11:00:00Z"
-        },
-        {
-            "id": "cmd_gv_coffee",
-            "orgId": "org_greenvalley_01",
-            "name": "Arabica Coffee (Parchment)",
-            "code": "CMD-CF-05",
-            "category": CommodityCategory.CASH_CROPS.value,
-            "standardUnit": "kg",
-            "supportedUnits": ["kg", "50kg bag"],
-            "varieties": ["SL28", "Ruiru 11", "Batian"],
-            "description": "High-altitude specialty coffee cherry and parchment for Nairobi Coffee Exchange auction.",
-            "isActive": True,
-            "createdAt": "2026-01-22T14:00:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "cmd_hl_tea",
-            "orgId": "org_highland_02",
-            "name": "Green Leaf Tea",
-            "code": "CMD-TEA-01",
-            "category": CommodityCategory.CASH_CROPS.value,
-            "standardUnit": "kg",
-            "supportedUnits": ["kg"],
-            "varieties": ["TRFK 306", "BB35"],
-            "description": "Highland plucked tea shoots for factory processing and Mombasa Auction.",
-            "isActive": True,
-            "createdAt": "2026-02-01T08:00:00Z"
-        }
-    ]
-}
+init_db()
+seed_default_data()
 
-
-TENANT_PRICES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        # Fresh / Current Records (Collected 2026-11-02 to 2026-11-04)
-        {
-            "id": "prc_gv_101",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "H614D",
-            "marketName": "Wakulima Wholesale Market",
-            "marketLocation": {"county": "Nairobi", "region": "Central", "latitude": -1.2864, "longitude": 36.8322},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 4500.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 50.0,
-            "currency": "KES",
-            "dateCollected": "2026-11-04",
-            "dataSource": "Ministry of Agriculture Market Information System (MIS)",
-            "collectorName": "MoA Market Enumerator Team",
-            "collectorUserId": "usr_analyst_004",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-11-04T08:30:00Z",
-            "notes": "Tight supply from dry grain reserves; prices stable week-on-week.",
-            "createdAt": "2026-11-04T08:15:00Z"
-        },
-        {
-            "id": "prc_gv_102",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "H614D",
-            "marketName": "Nakuru Top Market",
-            "marketLocation": {"county": "Nakuru", "region": "Rift Valley", "latitude": -0.2833, "longitude": 36.0667},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 4100.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 45.56,
-            "currency": "KES",
-            "dateCollected": "2026-11-03",
-            "dataSource": "Field Enumerator Survey - Nakuru AgTech",
-            "collectorName": "Amina Otieno",
-            "collectorUserId": "usr_field_003",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-11-03T16:00:00Z",
-            "notes": "Direct arrivals from Rongai and Subukia commercial aggregators.",
-            "createdAt": "2026-11-03T15:30:00Z"
-        },
-        {
-            "id": "prc_gv_103",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "Mixed Commercial",
-            "marketName": "Eldoret Municipal Market",
-            "marketLocation": {"county": "Uasin Gishu", "region": "Rift Valley", "latitude": 0.5143, "longitude": 35.2698},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 3850.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 42.78,
-            "currency": "KES",
-            "dateCollected": "2026-11-03",
-            "dataSource": "National Cereals and Produce Board (NCPB) Bulletin",
-            "collectorName": "Brian Njoroge",
-            "collectorUserId": "usr_analyst_004",
-            "collectionMethod": CollectionMethod.IMPORTED.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_admin_001",
-            "verifiedAt": "2026-11-03T18:00:00Z",
-            "notes": "Harvest ongoing in North Rift; surplus local supply depressing spot rates.",
-            "createdAt": "2026-11-03T17:45:00Z"
-        },
-        {
-            "id": "prc_gv_104",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_tomato",
-            "commodityName": "Fresh Tomato",
-            "variety": "Roma VF",
-            "marketName": "Wakulima Wholesale Market",
-            "marketLocation": {"county": "Nairobi", "region": "Central", "latitude": -1.2864, "longitude": 36.8322},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 5800.0,
-            "unit": "Crate (64kg)",
-            "normalizedPricePerKg": 90.63,
-            "currency": "KES",
-            "dateCollected": "2026-11-04",
-            "dataSource": "Ministry of Agriculture Market Information System (MIS)",
-            "collectorName": "MoA Market Enumerator Team",
-            "collectorUserId": "usr_analyst_004",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-11-04T09:00:00Z",
-            "notes": "Strong demand from food-service sector. High crate quality.",
-            "createdAt": "2026-11-04T08:30:00Z"
-        },
-        {
-            "id": "prc_gv_105",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_tomato",
-            "commodityName": "Fresh Tomato",
-            "variety": "Roma VF",
-            "marketName": "Nakuru Top Market",
-            "marketLocation": {"county": "Nakuru", "region": "Rift Valley", "latitude": -0.2833, "longitude": 36.0667},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 4900.0,
-            "unit": "Crate (64kg)",
-            "normalizedPricePerKg": 76.56,
-            "currency": "KES",
-            "dateCollected": "2026-11-02",
-            "dataSource": "Field Enumerator Survey - Nakuru AgTech",
-            "collectorName": "Amina Otieno",
-            "collectorUserId": "usr_field_003",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-11-02T16:00:00Z",
-            "notes": "Farmgate crate purchases averaged KES 4,100; transportation adds KES 300.",
-            "createdAt": "2026-11-02T15:00:00Z"
-        },
-        {
-            "id": "prc_gv_106",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_beans",
-            "commodityName": "Rosecoco Beans",
-            "variety": "Rosecoco (GLP-2)",
-            "marketName": "Wakulima Wholesale Market",
-            "marketLocation": {"county": "Nairobi", "region": "Central", "latitude": -1.2864, "longitude": 36.8322},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 12500.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 138.89,
-            "currency": "KES",
-            "dateCollected": "2026-11-03",
-            "dataSource": "KNBS Agri-Price Bulletin",
-            "collectorName": "Brian Njoroge",
-            "collectorUserId": "usr_analyst_004",
-            "collectionMethod": CollectionMethod.IMPORTED.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_admin_001",
-            "verifiedAt": "2026-11-03T18:00:00Z",
-            "notes": "Imported supplies from Uganda augmenting local stocks.",
-            "createdAt": "2026-11-03T17:00:00Z"
-        },
-        {
-            "id": "prc_gv_107",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_potato",
-            "commodityName": "Irish Potato",
-            "variety": "Shangi",
-            "marketName": "Nakuru Top Market",
-            "marketLocation": {"county": "Nakuru", "region": "Rift Valley", "latitude": -0.2833, "longitude": 36.0667},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 2800.0,
-            "unit": "50kg bag",
-            "normalizedPricePerKg": 56.0,
-            "currency": "KES",
-            "dateCollected": "2026-11-02",
-            "dataSource": "Field Enumerator Survey - Nakuru AgTech",
-            "collectorName": "Amina Otieno",
-            "collectorUserId": "usr_field_003",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-11-02T16:00:00Z",
-            "notes": "Fresh harvest from Molo; good tuber size.",
-            "createdAt": "2026-11-02T15:30:00Z"
-        },
-
-        # Historical Records (Collected 2026-09-15 & 2026-10-01) - Demonstrates historical segregation
-        {
-            "id": "prc_gv_088",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "H614D",
-            "marketName": "Wakulima Wholesale Market",
-            "marketLocation": {"county": "Nairobi", "region": "Central", "latitude": -1.2864, "longitude": 36.8322},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 4200.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 46.67,
-            "currency": "KES",
-            "dateCollected": "2026-10-01",
-            "dataSource": "Ministry of Agriculture Market Information System (MIS)",
-            "collectorName": "MoA Market Enumerator Team",
-            "collectorUserId": "usr_analyst_004",
-            "collectionMethod": CollectionMethod.IMPORTED.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_admin_001",
-            "verifiedAt": "2026-10-02T08:00:00Z",
-            "notes": "Historical benchmark from early Q4 2026.",
-            "createdAt": "2026-10-01T12:00:00Z"
-        },
-        {
-            "id": "prc_gv_089",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "H614D",
-            "marketName": "Nakuru Top Market",
-            "marketLocation": {"county": "Nakuru", "region": "Rift Valley", "latitude": -0.2833, "longitude": 36.0667},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 3900.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 43.33,
-            "currency": "KES",
-            "dateCollected": "2026-09-15",
-            "dataSource": "Field Enumerator Survey - Nakuru AgTech",
-            "collectorName": "Amina Otieno",
-            "collectorUserId": "usr_field_003",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_mgr_002",
-            "verifiedAt": "2026-09-16T09:00:00Z",
-            "notes": "Pre-harvest low season price.",
-            "createdAt": "2026-09-15T14:00:00Z"
-        },
-
-        # Unverified Record (Collected manually by field enumerator, awaiting review)
-        {
-            "id": "prc_gv_109",
-            "orgId": "org_greenvalley_01",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "variety": "White Maize",
-            "marketName": "Naivasha Sub-County Market",
-            "marketLocation": {"county": "Nakuru", "region": "Rift Valley", "latitude": -0.7172, "longitude": 36.4310},
-            "priceType": PriceType.WHOLESALE.value,
-            "price": 4250.0,
-            "unit": "90kg bag",
-            "normalizedPricePerKg": 47.22,
-            "currency": "KES",
-            "dateCollected": "2026-11-03",
-            "dataSource": "Trader Self-Report - Naivasha",
-            "collectorName": "Field Enumerator Sub-Team",
-            "collectorUserId": "usr_field_003",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.UNVERIFIED.value,
-            "verifiedBy": None,
-            "verifiedAt": None,
-            "notes": "Single merchant self-reported quote; requires field supervisor verification.",
-            "createdAt": "2026-11-03T16:45:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "prc_hl_201",
-            "orgId": "org_highland_02",
-            "commodityId": "cmd_hl_tea",
-            "commodityName": "Green Leaf Tea",
-            "variety": "TRFK 306",
-            "marketName": "Kericho Tea Auction & Factory Gate",
-            "marketLocation": {"county": "Kericho", "region": "Rift Valley", "latitude": -0.3689, "longitude": 35.2863},
-            "priceType": PriceType.FARMGATE.value,
-            "price": 42.0,
-            "unit": "kg",
-            "normalizedPricePerKg": 42.0,
-            "currency": "KES",
-            "dateCollected": "2026-11-03",
-            "dataSource": "KTDA Factory Gate Bulletin",
-            "collectorName": "Kiprono Langat",
-            "collectorUserId": "usr_hl_001",
-            "collectionMethod": CollectionMethod.MANUAL.value,
-            "verificationStatus": VerificationStatus.VERIFIED.value,
-            "verifiedBy": "usr_hl_admin",
-            "verifiedAt": "2026-11-03T18:00:00Z",
-            "notes": "Monthly minimum guaranteed green leaf delivery advance rate.",
-            "createdAt": "2026-11-03T17:00:00Z"
-        }
-    ]
-}
-
-
-TENANT_RESEARCH: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "res_gv_001",
-            "orgId": "org_greenvalley_01",
-            "title": "Post-Harvest Maize Pricing and Spatial Arbitrage in North Rift Markets",
-            "location": "Uasin Gishu & Trans Nzoia",
-            "researchDate": "2026-10-20",
-            "commodityId": "cmd_gv_maize",
-            "commodityName": "White Maize",
-            "valueChainStage": "Farmgate to Wholesale Aggregator",
-            "findings": "Transport and logistics tariffs between North Rift grain depots and Nairobi wholesale hubs account for KES 450-550 per 90kg bag. Smallholders selling immediately post-harvest realize 16% lower net margins compared to cooperatives storing in hermetic grain bags for 60+ days.",
-            "sourceReferences": [
-                "MoA MIS Weekly Grain Bulletin (October 2026)",
-                "Tegemeo Institute of Agricultural Development & Policy Brief 2025",
-                "GreenValley On-Ground Field Enumerator Log"
-            ],
-            "attachments": [
-                "https://storage.agrotrack.ai/research/maize_spatial_arbitrage_oct2026.pdf",
-                "north_rift_moisture_survey_annex.csv"
-            ],
-            "authorId": "usr_analyst_004",
-            "authorName": "Brian Njoroge (Analyst)",
-            "createdAt": "2026-10-20T14:30:00Z"
-        },
-        {
-            "id": "res_gv_002",
-            "orgId": "org_greenvalley_01",
-            "title": "Horticulture Cold-Chain Logistics and Fresh Tomato Farmgate Price Margins",
-            "location": "Nakuru & Nairobi Corridor",
-            "researchDate": "2026-10-28",
-            "commodityId": "cmd_gv_tomato",
-            "commodityName": "Fresh Tomato",
-            "valueChainStage": "Horticulture Aggregation & Wholesale Transport",
-            "findings": "Farmgate crate realization in Subukia averaged KES 3,800/crate while wholesale realization at Wakulima reached KES 5,600/crate, reflecting a 47% gross margin largely consumed by crate breakages and transit delays.",
-            "sourceReferences": [
-                "Horticultural Crops Directorate (HCD) Annual Report",
-                "Kenya Agricultural & Livestock Research Organization (KALRO) Cold-Chain Survey",
-                "Field Enumerator Survey - Nakuru AgTech"
-            ],
-            "attachments": [
-                "https://storage.agrotrack.ai/research/tomato_cold_chain_margins_2026.pdf"
-            ],
-            "authorId": "usr_mgr_002",
-            "authorName": "David Kiprop (Project Manager)",
-            "createdAt": "2026-10-28T16:00:00Z"
-        }
-    ],
-    "org_highland_02": [
-        {
-            "id": "res_hl_001",
-            "orgId": "org_highland_02",
-            "title": "Smallholder Tea Fertilizer Cost Pass-Through and Auction Parity",
-            "location": "Kericho & Nandi Hills",
-            "researchDate": "2026-10-12",
-            "commodityId": "cmd_hl_tea",
-            "commodityName": "Green Leaf Tea",
-            "valueChainStage": "Factory Primary Processing",
-            "findings": "NPK 25-5-5 fertilizer subsidy programs maintained grower delivery momentum despite prolonged dry spells in late Q3.",
-            "sourceReferences": ["KTDA Annual Review", "Tea Board of Kenya Market Brief"],
-            "attachments": [],
-            "authorId": "usr_hl_001",
-            "authorName": "Kiprono Langat",
-            "createdAt": "2026-10-12T11:00:00Z"
-        }
-    ]
-}
+TENANT_COMMODITIES = DbTenantCollection("commodities")
+TENANT_PRICES = DbTenantCollection("market_prices")
+TENANT_RESEARCH = DbTenantCollection("market_research")
 
 
 # ── Internal Freshness & Age Enrichment ──────────────────────────────────────
@@ -649,6 +235,7 @@ def update_commodity(org_id: str, commodity_id: str, updates: Dict[str, Any]) ->
         if k not in ["id", "orgId", "createdAt"] and v is not None:
             cmd[k] = v
             
+    save_record("commodities", cmd, org_id=org_id)
     return cmd
 
 
@@ -661,11 +248,13 @@ def delete_commodity(org_id: str, commodity_id: str) -> Dict[str, Any]:
     if prices:
         # Soft-deactivate to preserve historical integrity
         cmd["isActive"] = False
+        save_record("commodities", cmd, org_id=org_id)
         return {
             "message": f"Commodity '{cmd['name']}' has {len(prices)} linked price records. It has been deactivated instead of deleted.",
             "deactivated": True
         }
         
+    delete_record("commodities", commodity_id, org_id=org_id)
     TENANT_COMMODITIES[org_id] = [c for c in TENANT_COMMODITIES[org_id] if c["id"] != commodity_id]
     return {"message": f"Commodity '{commodity_id}' deleted successfully.", "deleted": True}
 
@@ -859,12 +448,14 @@ def verify_price_record(org_id: str, price_id: str, verifier_user: Any) -> Dict[
     price_rec["verificationStatus"] = VerificationStatus.VERIFIED.value
     price_rec["verifiedBy"] = getattr(verifier_user, "uid", "usr_analyst")
     price_rec["verifiedAt"] = datetime.now().isoformat()
+    save_record("market_prices", price_rec, org_id=org_id)
     return _enrich_price_record(price_rec)
 
 
 def delete_price_record(org_id: str, price_id: str) -> Dict[str, Any]:
     """Deletes a price record."""
     get_price_by_id(org_id, price_id)
+    delete_record("market_prices", price_id, org_id=org_id)
     TENANT_PRICES[org_id] = [p for p in TENANT_PRICES[org_id] if p["id"] != price_id]
     return {"message": f"Price record '{price_id}' deleted successfully."}
 

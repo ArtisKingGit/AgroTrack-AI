@@ -81,526 +81,27 @@ def determine_indicator_status(progress_percent: float) -> str:
     return IndicatorStatus.CRITICAL.value
 
 
-# ── In-Memory Tenant Stores ──────────────────────────────────────────────────
+# ── Multi-Tenant Persistent SQLite Store (WAL Mode) ──────────────────────────
+from backend.db.database import (
+    DbTenantCollection,
+    save_record,
+    get_record,
+    list_records,
+    delete_record,
+    count_records,
+    init_db,
+    seed_default_data,
+)
 
-TENANT_PROJECTS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "proj_smcri_2026",
-            "orgId": "org_greenvalley_01",
-            "name": "Smallholder Maize Climate Resilience Initiative",
-            "code": "SMCRI-2026",
-            "description": "Climate-smart agronomic interventions, conservation tillage, and drought-tolerant seed for vulnerable maize farmers.",
-            "locations": [{"county": "Nakuru", "subCounty": "Rongai", "ward": "Solai"}],
-            "projectManagerId": "usr_mgr_002",
-            "projectManagerName": "David Kiprop",
-            "startDate": "2026-01-15",
-            "endDate": "2026-12-31",
-            "status": ProjectStatus.ACTIVE.value,
-            "budget": 4500000.0,
-            "currency": "KES",
-            "targetBeneficiaries": 1200,
-            "enrolledBeneficiariesCount": 3,
-            "objectives": [
-                {"id": "obj_01", "title": "Promote conservation tillage and drought-tolerant certified seed varieties"},
-                {"id": "obj_02", "title": "Establish 20 climate-smart farmer field demonstration plots"},
-                {"id": "obj_03", "title": "Improve household maize yields by at least 30% over baseline"},
-            ],
-            "sectors": ["Climate Resilience", "Food Security", "Smallholder Agriculture"],
-            "donor": "USAID Feed the Future",
-            "isArchived": False,
-            "createdAt": "2026-01-15T08:00:00Z",
-            "updatedAt": None,
-        },
-        {
-            "id": "proj_horticulture_export_2026",
-            "orgId": "org_greenvalley_01",
-            "name": "High-Value Avocado & Pepper Value Chain Grant",
-            "code": "HV-AVO-26",
-            "description": "Export market compliance, phytosanitary standards training, and seedling subsidization for horticultural farmers.",
-            "locations": [{"county": "Nakuru", "subCounty": "Njoro", "ward": "Lare"}],
-            "projectManagerId": "usr_mgr_002",
-            "projectManagerName": "David Kiprop",
-            "startDate": "2026-02-01",
-            "endDate": "2026-11-30",
-            "status": ProjectStatus.ACTIVE.value,
-            "budget": 6200000.0,
-            "currency": "KES",
-            "targetBeneficiaries": 650,
-            "enrolledBeneficiariesCount": 1,
-            "objectives": [
-                {"id": "obj_01", "title": "Distribute 15,000 certified Hass avocado grafted seedlings"},
-                {"id": "obj_02", "title": "Train 500 smallholders on GlobalGAP compliance and spray records"},
-            ],
-            "sectors": ["Horticulture", "Market Linkage", "Export Development"],
-            "donor": "AGRA Africa",
-            "isArchived": False,
-            "createdAt": "2026-02-01T09:00:00Z",
-            "updatedAt": None,
-        },
-        {
-            "id": "proj_soil_health_subcounty",
-            "orgId": "org_greenvalley_01",
-            "name": "Sub-County Soil Acidity & NPK Rehabilitation",
-            "code": "SOIL-REHAB",
-            "description": "Liming, organic bio-slurry promotion, and soil testing across acidified volcanic soil corridors.",
-            "locations": [{"county": "Nakuru", "subCounty": "Rongai", "ward": "Visoi"}],
-            "projectManagerId": "usr_mgr_002",
-            "projectManagerName": "David Kiprop",
-            "startDate": "2026-06-01",
-            "endDate": "2027-05-31",
-            "status": ProjectStatus.PLANNING.value,
-            "budget": 2100000.0,
-            "currency": "KES",
-            "targetBeneficiaries": 400,
-            "enrolledBeneficiariesCount": 0,
-            "objectives": [
-                {"id": "obj_01", "title": "Conduct 1,000 laboratory soil pH and NPK baseline tests"},
-                {"id": "obj_02", "title": "Deliver agricultural lime subsidy vouchers to affected smallholders"},
-            ],
-            "sectors": ["Soil Health", "Regenerative Agriculture"],
-            "donor": "County Government of Nakuru",
-            "isArchived": False,
-            "createdAt": "2026-05-10T10:00:00Z",
-            "updatedAt": None,
-        },
-    ],
-    "org_highland_02": [
-        {
-            "id": "proj_highland_tea_2026",
-            "orgId": "org_highland_02",
-            "name": "Highland Smallholder Tea Regenerative Pruning",
-            "code": "TEA-REGEN-26",
-            "description": "Soil moisture conservation and bush rejuvenation for smallholder tea growers in Kericho.",
-            "locations": [{"county": "Kericho", "subCounty": "Bureti", "ward": "Cheborge"}],
-            "projectManagerId": "usr_hl_pm",
-            "projectManagerName": "Wilson Koech",
-            "startDate": "2026-03-01",
-            "endDate": "2026-12-31",
-            "status": ProjectStatus.ACTIVE.value,
-            "budget": 3500000.0,
-            "currency": "KES",
-            "targetBeneficiaries": 500,
-            "enrolledBeneficiariesCount": 1,
-            "objectives": [
-                {"id": "obj_01", "title": "Pruning and fertilizer calibration across 500 smallholder tea blocks"}
-            ],
-            "sectors": ["Cash Crops", "Tea Value Chain"],
-            "donor": "KTDA Foundation",
-            "isArchived": False,
-            "createdAt": "2026-03-01T11:00:00Z",
-            "updatedAt": None,
-        }
-    ],
-}
+init_db()
+seed_default_data()
 
-TENANT_BENEFICIARIES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "ben_gv_01",
-            "orgId": "org_greenvalley_01",
-            "beneficiaryCode": "BEN-GV-0001",
-            "firstName": "Mary",
-            "lastName": "Wambui",
-            "category": BeneficiaryCategory.SMALLHOLDER_FARMER.value,
-            "gender": "female",
-            "ageGroup": "youth_18_35",
-            "location": {"county": "Nakuru", "subCounty": "Rongai", "ward": "Solai"},
-            "linkedFarmerId": "fmr_001",
-            "phone": "+254722123456",
-            "nationalId": "29871120",
-            "enrolledProjects": [
-                {
-                    "projectId": "proj_smcri_2026",
-                    "projectName": "Smallholder Maize Climate Resilience Initiative",
-                    "enrolmentDate": "2026-02-01",
-                    "participationStatus": ParticipationStatus.ACTIVE.value,
-                    "supportReceived": ["Drought-Tolerant Seeds", "GAP Training"],
-                }
-            ],
-            "status": "active",
-            "createdAt": "2026-02-01T09:30:00Z",
-            "updatedAt": None,
-        },
-        {
-            "id": "ben_gv_02",
-            "orgId": "org_greenvalley_01",
-            "beneficiaryCode": "BEN-GV-0002",
-            "firstName": "John",
-            "lastName": "Koech",
-            "category": BeneficiaryCategory.SMALLHOLDER_FARMER.value,
-            "gender": "male",
-            "ageGroup": "adult_36_60",
-            "location": {"county": "Nakuru", "subCounty": "Rongai", "ward": "Solai"},
-            "linkedFarmerId": "fmr_002",
-            "phone": "+254733445566",
-            "nationalId": "18765432",
-            "enrolledProjects": [
-                {
-                    "projectId": "proj_smcri_2026",
-                    "projectName": "Smallholder Maize Climate Resilience Initiative",
-                    "enrolmentDate": "2026-02-10",
-                    "participationStatus": ParticipationStatus.ACTIVE.value,
-                    "supportReceived": ["Certified Maize Seed", "Soil Testing Voucher"],
-                }
-            ],
-            "status": "active",
-            "createdAt": "2026-02-10T10:15:00Z",
-            "updatedAt": None,
-        },
-        {
-            "id": "ben_gv_03",
-            "orgId": "org_greenvalley_01",
-            "beneficiaryCode": "BEN-GV-0003",
-            "firstName": "Faith",
-            "lastName": "Chepkemoi",
-            "category": BeneficiaryCategory.WOMEN_COOPERATIVE.value,
-            "gender": "female",
-            "ageGroup": "youth_18_35",
-            "location": {"county": "Nakuru", "subCounty": "Njoro", "ward": "Lare"},
-            "linkedFarmerId": None,
-            "phone": "+254711889900",
-            "nationalId": "31224455",
-            "enrolledProjects": [
-                {
-                    "projectId": "proj_horticulture_export_2026",
-                    "projectName": "High-Value Avocado & Pepper Value Chain Grant",
-                    "enrolmentDate": "2026-02-15",
-                    "participationStatus": ParticipationStatus.ACTIVE.value,
-                    "supportReceived": ["Avocado Seedlings", "Export Standards Training"],
-                }
-            ],
-            "status": "active",
-            "createdAt": "2026-02-15T11:00:00Z",
-            "updatedAt": None,
-        },
-        {
-            "id": "ben_gv_04",
-            "orgId": "org_greenvalley_01",
-            "beneficiaryCode": "BEN-GV-0004",
-            "firstName": "Samuel",
-            "lastName": "Kiprono",
-            "category": BeneficiaryCategory.YOUTH_AGRIPRENEUR.value,
-            "gender": "male",
-            "ageGroup": "youth_18_35",
-            "location": {"county": "Nakuru", "subCounty": "Rongai", "ward": "Visoi"},
-            "linkedFarmerId": None,
-            "phone": "+254700112233",
-            "nationalId": "34556677",
-            "enrolledProjects": [
-                {
-                    "projectId": "proj_smcri_2026",
-                    "projectName": "Smallholder Maize Climate Resilience Initiative",
-                    "enrolmentDate": "2026-03-01",
-                    "participationStatus": ParticipationStatus.ACTIVE.value,
-                    "supportReceived": ["Sprayer Equipment", "Digital Advisory"],
-                }
-            ],
-            "status": "active",
-            "createdAt": "2026-03-01T12:00:00Z",
-            "updatedAt": None,
-        },
-    ],
-    "org_highland_02": [
-        {
-            "id": "ben_hl_01",
-            "orgId": "org_highland_02",
-            "beneficiaryCode": "BEN-HL-0001",
-            "firstName": "James",
-            "lastName": "Mutua",
-            "category": BeneficiaryCategory.SMALLHOLDER_FARMER.value,
-            "gender": "male",
-            "ageGroup": "adult_36_60",
-            "location": {"county": "Kericho", "subCounty": "Bureti", "ward": "Cheborge"},
-            "linkedFarmerId": None,
-            "phone": "+254712349988",
-            "nationalId": "20998811",
-            "enrolledProjects": [
-                {
-                    "projectId": "proj_highland_tea_2026",
-                    "projectName": "Highland Smallholder Tea Regenerative Pruning",
-                    "enrolmentDate": "2026-03-05",
-                    "participationStatus": ParticipationStatus.ACTIVE.value,
-                    "supportReceived": ["Tea Shears", "Fertilizer Schedule"],
-                }
-            ],
-            "status": "active",
-            "createdAt": "2026-03-05T08:00:00Z",
-            "updatedAt": None,
-        }
-    ],
-}
-
-TENANT_INDICATORS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "ind_smcri_01",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_smcri_2026",
-            "projectName": "Smallholder Maize Climate Resilience Initiative",
-            "name": "Hectares under Climate-Smart Agriculture",
-            "code": "IND-CSA-01",
-            "description": "Total agricultural area adopting conservation tillage, mulching, and drought-tolerant seed varieties.",
-            "category": IndicatorCategory.OUTPUT.value,
-            "unit": "hectares",
-            "baselineValue": 0.0,
-            "targetValue": 500.0,
-            "currentValue": 380.0,
-            "progressPercent": 76.0,
-            "reportingFrequency": ReportingFrequency.QUARTERLY.value,
-            "status": IndicatorStatus.ON_TRACK.value,
-            "isVerified": True,
-            "verificationSource": "Mid-Term Independent Assessment by Egerton AgEcon Team",
-            "lastReportedDate": "2026-09-30",
-            "createdAt": "2026-01-20T08:00:00Z",
-        },
-        {
-            "id": "ind_smcri_02",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_smcri_2026",
-            "projectName": "Smallholder Maize Climate Resilience Initiative",
-            "name": "Average Smallholder Maize Yield Gain",
-            "code": "IND-YLD-02",
-            "description": "Percentage increase in average maize yield per acre over the baseline survey.",
-            "category": IndicatorCategory.OUTCOME.value,
-            "unit": "percent",
-            "baselineValue": 0.0,
-            "targetValue": 35.0,
-            "currentValue": 28.0,
-            "progressPercent": 80.0,
-            "reportingFrequency": ReportingFrequency.SEMI_ANNUALLY.value,
-            "status": IndicatorStatus.ON_TRACK.value,
-            "isVerified": True,
-            "verificationSource": "Post-Harvest Sample Threshing Audit across 40 Sentinel Farms",
-            "lastReportedDate": "2026-10-15",
-            "createdAt": "2026-01-20T08:00:00Z",
-        },
-        {
-            "id": "ind_smcri_03",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_smcri_2026",
-            "projectName": "Smallholder Maize Climate Resilience Initiative",
-            "name": "Smallholder Farmers Trained in GAP",
-            "code": "IND-TRN-03",
-            "description": "Number of smallholder farmers completing the 4-module Good Agricultural Practices curriculum.",
-            "category": IndicatorCategory.OUTPUT.value,
-            "unit": "farmers_trained",
-            "baselineValue": 0.0,
-            "targetValue": 1200.0,
-            "currentValue": 840.0,
-            "progressPercent": 70.0,
-            "reportingFrequency": ReportingFrequency.MONTHLY.value,
-            "status": IndicatorStatus.BEHIND.value,
-            "isVerified": False,
-            "verificationSource": None,
-            "lastReportedDate": "2026-10-25",
-            "createdAt": "2026-01-20T08:00:00Z",
-        },
-        {
-            "id": "ind_hort_01",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_horticulture_export_2026",
-            "projectName": "High-Value Avocado & Pepper Value Chain Grant",
-            "name": "Hass Avocado Trees Planted",
-            "code": "IND-AVO-01",
-            "description": "Number of certified grafted Hass avocado seedlings planted and GPS tagged.",
-            "category": IndicatorCategory.OUTPUT.value,
-            "unit": "trees_planted",
-            "baselineValue": 0.0,
-            "targetValue": 15000.0,
-            "currentValue": 16200.0,
-            "progressPercent": 100.0,
-            "reportingFrequency": ReportingFrequency.QUARTERLY.value,
-            "status": IndicatorStatus.ACHIEVED.value,
-            "isVerified": True,
-            "verificationSource": "Nursery Delivery Manifests & Nursery Inspection Certificates",
-            "lastReportedDate": "2026-10-10",
-            "createdAt": "2026-02-05T09:00:00Z",
-        },
-    ],
-    "org_highland_02": [
-        {
-            "id": "ind_hl_01",
-            "orgId": "org_highland_02",
-            "projectId": "proj_highland_tea_2026",
-            "projectName": "Highland Smallholder Tea Regenerative Pruning",
-            "name": "Tea Yield Quality Index",
-            "code": "IND-TEA-01",
-            "description": "Percentage of plucked tea leaves meeting prime two-leaves-and-a-bud specification.",
-            "category": IndicatorCategory.OUTCOME.value,
-            "unit": "percent",
-            "baselineValue": 65.0,
-            "targetValue": 85.0,
-            "currentValue": 78.0,
-            "progressPercent": 65.0,
-            "reportingFrequency": ReportingFrequency.MONTHLY.value,
-            "status": IndicatorStatus.BEHIND.value,
-            "isVerified": True,
-            "verificationSource": "KTDA Factory Intake Receipts",
-            "lastReportedDate": "2026-10-20",
-            "createdAt": "2026-03-10T10:00:00Z",
-        }
-    ],
-}
-
-TENANT_ACTIVITIES: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "act_imp_01",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_smcri_2026",
-            "projectName": "Smallholder Maize Climate Resilience Initiative",
-            "title": "Climate-Smart Soil Health & Seed Inoculation Workshop",
-            "activityType": ImpactActivityType.TRAINING_WORKSHOP.value,
-            "activityDate": "2026-09-14",
-            "location": "Solai Community Center, Nakuru",
-            "responsibleStaffId": "usr_field_003",
-            "responsibleStaffName": "Amina Otieno",
-            "targetAttendance": 60,
-            "actualAttendance": 54,
-            "femaleAttendance": 32,
-            "maleAttendance": 22,
-            "youthAttendance": 28,
-            "outputs": [
-                "54 farmers completed practical bio-fertilizer mixing",
-                "Distributed 54 training handbooks and field measuring tapes",
-            ],
-            "supportingNotes": "Strong participation from women's self-help group members. Demonstrations covered minimum tillage and seed spacing.",
-            "evidenceAttachments": ["https://images.unsplash.com/photo-1592417817098-8f3d6910985c"],
-            "status": ImpactActivityStatus.COMPLETED.value,
-            "isVerified": True,
-            "createdAt": "2026-09-14T17:00:00Z",
-        },
-        {
-            "id": "act_imp_02",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_smcri_2026",
-            "projectName": "Smallholder Maize Climate Resilience Initiative",
-            "title": "Certified Drought-Tolerant Seed Distribution Drive",
-            "activityType": ImpactActivityType.INPUT_DISTRIBUTION.value,
-            "activityDate": "2026-10-05",
-            "location": "Rongai Agricultural Depot, Nakuru",
-            "responsibleStaffId": "usr_field_003",
-            "responsibleStaffName": "Amina Otieno",
-            "targetAttendance": 200,
-            "actualAttendance": 185,
-            "femaleAttendance": 110,
-            "maleAttendance": 75,
-            "youthAttendance": 65,
-            "outputs": [
-                "185 bags of certified drought-tolerant seed vouchers redeemed",
-                "Inspected and validated KEPHIS seed lot germination certificates",
-            ],
-            "supportingNotes": "Logistics smooth; cooperative officials supervised queue management and verified farmer national IDs against roster.",
-            "evidenceAttachments": ["https://images.unsplash.com/photo-1574943320219-553eb213f72d"],
-            "status": ImpactActivityStatus.COMPLETED.value,
-            "isVerified": True,
-            "createdAt": "2026-10-05T18:00:00Z",
-        },
-        {
-            "id": "act_imp_03",
-            "orgId": "org_greenvalley_01",
-            "projectId": "proj_horticulture_export_2026",
-            "projectName": "High-Value Avocado & Pepper Value Chain Grant",
-            "title": "Avocado Export Phytosanitary & Spray Protocol Session",
-            "activityType": ImpactActivityType.FIELD_DEMONSTRATION.value,
-            "activityDate": "2026-10-22",
-            "location": "Njoro Demonstration Orchard, Nakuru",
-            "responsibleStaffId": "usr_mgr_002",
-            "responsibleStaffName": "David Kiprop",
-            "targetAttendance": 45,
-            "actualAttendance": 42,
-            "femaleAttendance": 24,
-            "maleAttendance": 18,
-            "youthAttendance": 19,
-            "outputs": [
-                "Live pruning and copper spray demonstration conducted",
-                "42 pheromone fruit fly pest traps deployed across demonstration plots",
-            ],
-            "supportingNotes": "Field officers noted high awareness of maximum residue limits (MRLs). Observations recorded manually.",
-            "evidenceAttachments": [],
-            "status": ImpactActivityStatus.COMPLETED.value,
-            "isVerified": False,
-            "createdAt": "2026-10-22T16:30:00Z",
-        },
-    ],
-    "org_highland_02": [
-        {
-            "id": "act_hl_01",
-            "orgId": "org_highland_02",
-            "projectId": "proj_highland_tea_2026",
-            "projectName": "Highland Smallholder Tea Regenerative Pruning",
-            "title": "Tea Soil Acidity Sampling & Lime Advisory",
-            "activityType": ImpactActivityType.FIELD_DEMONSTRATION.value,
-            "activityDate": "2026-09-28",
-            "location": "Cheborge Tea Collection Point, Kericho",
-            "responsibleStaffId": "usr_hl_pm",
-            "responsibleStaffName": "Wilson Koech",
-            "targetAttendance": 30,
-            "actualAttendance": 28,
-            "femaleAttendance": 12,
-            "maleAttendance": 16,
-            "youthAttendance": 8,
-            "outputs": ["28 soil pH tests conducted on-site"],
-            "supportingNotes": "High acidity detected across blocks 4 and 5.",
-            "evidenceAttachments": [],
-            "status": ImpactActivityStatus.COMPLETED.value,
-            "isVerified": True,
-            "createdAt": "2026-09-28T14:00:00Z",
-        }
-    ],
-}
-
-TENANT_INDICATOR_LOGS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [
-        {
-            "id": "log_ind_01",
-            "indicatorId": "ind_smcri_01",
-            "period": "Q3-2026",
-            "measuredValue": 380.0,
-            "measurementDate": "2026-09-30",
-            "source": "Mid-Term Independent Assessment by Egerton AgEcon Team",
-            "notes": "Verified through satellite NDVI and field boundary perimeter walking.",
-            "isVerified": True,
-            "verificationSource": "Egerton University AgEcon Dept",
-            "reportedBy": "David Kiprop",
-            "recordedAt": "2026-09-30T16:00:00Z",
-        },
-        {
-            "id": "log_ind_02",
-            "indicatorId": "ind_smcri_02",
-            "period": "Q3-2026",
-            "measuredValue": 28.0,
-            "measurementDate": "2026-10-15",
-            "source": "Post-Harvest Sample Threshing Audit across 40 Sentinel Farms",
-            "notes": "Yields weighed on calibrated spring balances.",
-            "isVerified": True,
-            "verificationSource": "Ministry of Agriculture Crop Inspectorate",
-            "reportedBy": "David Kiprop",
-            "recordedAt": "2026-10-15T12:00:00Z",
-        },
-        {
-            "id": "log_ind_03",
-            "indicatorId": "ind_smcri_03",
-            "period": "October 2026",
-            "measuredValue": 840.0,
-            "measurementDate": "2026-10-25",
-            "source": "Field Officer Daily Sign-In Attendance Registers",
-            "notes": "Attendance sheets aggregated; pending independent donor audit.",
-            "isVerified": False,
-            "verificationSource": None,
-            "reportedBy": "Amina Otieno",
-            "recordedAt": "2026-10-25T17:00:00Z",
-        },
-    ],
-    "org_highland_02": [],
-}
-
-TENANT_REPORTS: Dict[str, List[Dict[str, Any]]] = {
-    "org_greenvalley_01": [],
-    "org_highland_02": [],
-}
-
+TENANT_PROJECTS = DbTenantCollection('impact_projects')
+TENANT_BENEFICIARIES = DbTenantCollection('impact_beneficiaries')
+TENANT_INDICATORS = DbTenantCollection('impact_indicators')
+TENANT_INDICATOR_LOGS = DbTenantCollection('impact_progress_records')
+TENANT_ACTIVITIES = DbTenantCollection('impact_activities')
+TENANT_REPORTS = DbTenantCollection('impact_reports')
 
 # ── Projects Domain Operations ───────────────────────────────────────────────
 
@@ -766,6 +267,7 @@ def update_project(org_id: str, project_id: str, req: ProjectUpdateRequest, user
             project["status"] = ProjectStatus.ARCHIVED.value
 
     project["updatedAt"] = datetime.utcnow().isoformat() + "Z"
+    save_record("impact_projects", project, org_id=org_id)
     return project
 
 
@@ -775,6 +277,7 @@ def archive_project(org_id: str, project_id: str, user: UserProfile) -> Dict[str
     project["isArchived"] = True
     project["status"] = ProjectStatus.ARCHIVED.value
     project["updatedAt"] = datetime.utcnow().isoformat() + "Z"
+    save_record("impact_projects", project, org_id=org_id)
     return {
         "message": f"Project '{project['name']}' ({project['code']}) has been successfully archived.",
         "project": project,
@@ -784,6 +287,7 @@ def archive_project(org_id: str, project_id: str, user: UserProfile) -> Dict[str
 def delete_project(org_id: str, project_id: str, user: UserProfile) -> Dict[str, Any]:
     """Deletes or soft archives a project."""
     project = get_project(org_id, project_id)
+    delete_record("impact_projects", project_id, org_id=org_id)
     TENANT_PROJECTS[org_id] = [p for p in TENANT_PROJECTS[org_id] if p["id"] != project_id]
     return {
         "message": f"Project '{project['name']}' ({project['code']}) removed from registry.",
@@ -876,6 +380,7 @@ def create_beneficiary(org_id: str, req: BeneficiaryCreateRequest, user: UserPro
         })
         # Increment project enrolled count
         proj["enrolledBeneficiariesCount"] = proj.get("enrolledBeneficiariesCount", 0) + 1
+        save_record("impact_projects", proj, org_id=org_id)
 
     new_beneficiary = {
         "id": ben_id,
@@ -924,6 +429,7 @@ def update_beneficiary(org_id: str, beneficiary_id: str, req: BeneficiaryUpdateR
         beneficiary["status"] = req.status
 
     beneficiary["updatedAt"] = datetime.utcnow().isoformat() + "Z"
+    save_record("impact_beneficiaries", beneficiary, org_id=org_id)
     return beneficiary
 
 
@@ -955,12 +461,15 @@ def enroll_beneficiary_in_project(
         "supportReceived": support_received or [],
     })
     project["enrolledBeneficiariesCount"] = project.get("enrolledBeneficiariesCount", 0) + 1
+    save_record("impact_projects", project, org_id=org_id)
+    save_record("impact_beneficiaries", beneficiary, org_id=org_id)
     return beneficiary
 
 
 def delete_beneficiary(org_id: str, beneficiary_id: str, user: UserProfile) -> Dict[str, Any]:
     """Deletes or soft archives a beneficiary."""
     beneficiary = get_beneficiary(org_id, beneficiary_id)
+    delete_record("impact_beneficiaries", beneficiary_id, org_id=org_id)
     TENANT_BENEFICIARIES[org_id] = [b for b in TENANT_BENEFICIARIES[org_id] if b["id"] != beneficiary_id]
     return {
         "message": f"Beneficiary '{beneficiary['firstName']} {beneficiary['lastName']}' removed.",
@@ -1074,6 +583,7 @@ def update_indicator(org_id: str, indicator_id: str, req: IndicatorUpdateRequest
         indicator["progressPercent"] = progress
         indicator["status"] = determine_indicator_status(progress)
 
+    save_record("impact_indicators", indicator, org_id=org_id)
     return indicator
 
 
@@ -1120,6 +630,7 @@ def record_indicator_progress(
         "reportedBy": user.name,
         "recordedAt": datetime.utcnow().isoformat() + "Z",
     }
+    save_record("impact_indicators", indicator, org_id=org_id)
     TENANT_INDICATOR_LOGS[org_id].append(log_entry)
 
     return {
@@ -1237,12 +748,14 @@ def update_activity(org_id: str, activity_id: str, req: ImpactActivityUpdateRequ
     if req.isVerified is not None:
         activity["isVerified"] = bool(req.isVerified)
 
+    save_record("impact_activities", activity, org_id=org_id)
     return activity
 
 
 def delete_activity(org_id: str, activity_id: str, user: UserProfile) -> Dict[str, Any]:
     """Deletes an activity record."""
     activity = get_activity(org_id, activity_id)
+    delete_record("impact_activities", activity_id, org_id=org_id)
     TENANT_ACTIVITIES[org_id] = [a for a in TENANT_ACTIVITIES[org_id] if a["id"] != activity_id]
     return {
         "message": f"Activity '{activity['title']}' removed from registry.",

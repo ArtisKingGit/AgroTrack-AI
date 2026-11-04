@@ -5,44 +5,56 @@
  */
 
 :root {
-  /* Color Palette */
-  --bg-base: #07120c;
-  --bg-surface: #0e1e16;
-  --bg-surface-elevated: #14281f;
-  --bg-surface-hover: #1a3328;
-  --border-subtle: #1c3528;
-  --border-strong: #2a4d3b;
-  
-  --primary: #15803d;
+  /* AgroFast Signature Visual Identity & Colour Palette */
+  --primary: #22c55e;
+  --primary-glow: rgba(34, 197, 94, 0.35);
+  --primary-dark: #16a34a;
   --primary-hover: #16a34a;
-  --primary-subtle: rgba(22, 163, 74, 0.15);
+  --primary-subtle: rgba(34, 197, 94, 0.12);
+
+  --bg-dark: #020617;
+  --bg-base: #020617;
+  --bg-surface: rgba(10, 17, 35, 0.92);
+  --bg-surface-elevated: rgba(15, 23, 42, 0.75);
+  --bg-surface-hover: rgba(30, 41, 59, 0.65);
+  --card-bg: rgba(15, 23, 42, 0.65);
   
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(34, 197, 94, 0.3);
+  --border-focus: rgba(34, 197, 94, 0.45);
+
   --accent: #22c55e;
   --accent-light: #4ade80;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
+
+  --text: #f1f5f9;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+
   --status-active: #22c55e;
   --status-active-bg: rgba(34, 197, 94, 0.15);
   --status-dev: #f59e0b;
   --status-dev-bg: rgba(245, 158, 11, 0.15);
   --status-preview: #38bdf8;
   --status-preview-bg: rgba(56, 189, 248, 0.15);
-  
-  --role-admin: #10b981;
+
+  --role-admin: #22c55e;
   --role-pm: #14b8a6;
   --role-fo: #38bdf8;
   --role-analyst: #a855f7;
   --role-viewer: #94a3b8;
-  
+
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --sidebar-width: 260px;
+  --sidebar-width: 270px;
   --topbar-height: 64px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
 }
 
 * {
@@ -53,7 +65,9 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-base);
+  background: var(--bg-dark);
+  background-image: radial-gradient(at 5% 5%, rgba(34, 197, 94, 0.08) 0, transparent 50%),
+    radial-gradient(at 95% 95%, rgba(59, 130, 246, 0.08) 0, transparent 50%);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -425,12 +439,21 @@ body {
 }
 
 .stat-card {
-  background-color: var(--bg-surface);
+  background-color: var(--card-bg);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 24px -4px rgba(34, 197, 94, 0.15);
 }
 
 .stat-header {
@@ -499,7 +522,8 @@ body {
 }
 
 .module-card {
-  background-color: var(--bg-surface);
+  background-color: var(--card-bg);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 24px;
@@ -509,11 +533,13 @@ body {
   color: inherit;
   transition: all 0.2s ease;
   position: relative;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
 }
 
 .module-card:hover {
   background-color: var(--bg-surface-elevated);
-  border-color: var(--border-strong);
+  border-color: var(--primary-glow);
+  box-shadow: 0 8px 24px -4px rgba(34, 197, 94, 0.2);
   transform: translateY(-2px);
 }
 
@@ -583,10 +609,87 @@ body {
 }
 
 .panel-card {
-  background-color: var(--bg-surface);
+  background-color: var(--card-bg);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 24px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
+}
+
+/* AgroFast Standard Input & Form Styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select,
+textarea,
+.form-control {
+  background: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 12px var(--primary-glow) !important;
+  outline: none !important;
+}
+
+/* AgroFast Action Buttons */
+.btn-action-primary,
+.btn-primary {
+  background: var(--primary) !important;
+  color: #020617 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 16px var(--primary-glow);
+  transition: all 0.2s ease;
+}
+
+.btn-action-primary:hover,
+.btn-primary:hover {
+  background: var(--primary-dark) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px var(--primary-glow);
+}
+
+.btn-action-secondary,
+.btn-secondary {
+  background: rgba(30, 41, 59, 0.6) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-secondary:hover,
+.btn-secondary:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .panel-header {
