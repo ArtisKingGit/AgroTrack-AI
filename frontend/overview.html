@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroTrack AI — Platform Overview</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Platform Styles -->
+  <link rel="stylesheet" href="css/agrotrack.css">
+  <link rel="stylesheet" href="css/assistant-widget.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Persistent Sidebar -->
+    <aside id="appSidebar"></aside>
+
+    <!-- Main Viewport -->
+    <main class="app-main">
+      <!-- Sticky Topbar Header -->
+      <header id="appTopbar"></header>
+
+      <!-- Content Area -->
+      <div class="content-wrapper">
+        <!-- Page Title & Overview Banner -->
+        <div class="page-header">
+          <h2 class="page-title">Executive Command Overview</h2>
+          <p class="page-subtitle">Agricultural Intelligence and Development Management Platform — Enterprise Operational Summary</p>
+        </div>
+
+        <!-- Platform Metric Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Active Farms</span>
+              <div class="stat-icon icon-green"><i class="fas fa-seedling"></i></div>
+            </div>
+            <div class="stat-value" id="statFarms">48</div>
+            <div class="stat-meta"><i class="fas fa-check-circle" style="color: var(--accent);"></i> Managed plots in pipeline</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Monitored Acreage</span>
+              <div class="stat-icon icon-blue"><i class="fas fa-vector-square"></i></div>
+            </div>
+            <div class="stat-value" id="statAcreage">326.5</div>
+            <div class="stat-meta"><i class="fas fa-location-dot" style="color: var(--status-preview);"></i> 6 Agricultural Zones</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Registered Farmers</span>
+              <div class="stat-icon icon-amber"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="stat-value" id="statFarmers">1,472</div>
+            <div class="stat-meta"><i class="fas fa-id-card" style="color: var(--status-dev);"></i> Enrolled Beneficiaries</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">AI Leaf Scans</span>
+              <div class="stat-icon icon-purple"><i class="fas fa-microscope"></i></div>
+            </div>
+            <div class="stat-value" id="statScans">894</div>
+            <div class="stat-meta"><i class="fas fa-brain" style="color: #a855f7;"></i> 91.5% Validation Accuracy</div>
+          </div>
+        </div>
+
+        <!-- Platform Modules Status Section -->
+        <h3 class="section-heading"><i class="fas fa-cubes-stacked"></i> Platform Capabilities</h3>
+        <div class="modules-grid">
+          <!-- AgroTrack -->
+          <a href="track.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-seedling"></i></div>
+              <span class="module-badge badge-active">Active</span>
+            </div>
+            <h4 class="module-title">AgroTrack</h4>
+            <p class="module-description">Farmer and plot records, soil NPK analysis, crop leaf disease scanner, and smart weather recommendations.</p>
+            <div class="module-action"><span>Open AgroTrack Operations</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <!-- MarketLens -->
+          <a href="marketlens.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-chart-line"></i></div>
+              <span class="module-badge badge-dev">Phase 3</span>
+            </div>
+            <h4 class="module-title">MarketLens</h4>
+            <p class="module-description">Agricultural market research, regional commodity price trends, wholesale index, and value-chain intelligence.</p>
+            <div class="module-action" style="color: var(--status-dev);"><span>Explore Market Roadmap</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <!-- ImpactOS -->
+          <a href="impactos.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-hands-holding-circle"></i></div>
+              <span class="module-badge badge-dev">Phase 3</span>
+            </div>
+            <h4 class="module-title">ImpactOS</h4>
+            <p class="module-description">Project management, donor indicator tracking, target beneficiaries, and M&E impact accountability reports.</p>
+            <div class="module-action" style="color: var(--status-dev);"><span>Explore Impact Roadmap</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <!-- AI Analyst -->
+          <a href="analyst.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-brain"></i></div>
+              <span class="module-badge badge-preview">Preview</span>
+            </div>
+            <h4 class="module-title">AI Analyst</h4>
+            <p class="module-description">Cross-platform intelligence layer connecting farm soil data, commodity trends, and impact targets via LLM reasoning.</p>
+            <div class="module-action" style="color: var(--status-preview);"><span>Open Agri-Analyst</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+        </div>
+
+        <!-- Dual Column: Active Projects & Real-Time Activity -->
+        <div class="dual-grid">
+          <!-- Active Projects Table -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h4 class="panel-title"><i class="fas fa-folder-tree" style="color: var(--accent); margin-right: 8px;"></i> Active Agricultural Projects (ImpactOS Preview)</h4>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">[Demo Pipeline]</span>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Project Name</th>
+                  <th>Code</th>
+                  <th>Status</th>
+                  <th>Target Farmers</th>
+                  <th>Budget</th>
+                </tr>
+              </thead>
+              <tbody id="projectsTableBody">
+                <tr>
+                  <td><strong>Smallholder Maize Climate Resilience</strong></td>
+                  <td><code>SMCRI-2026</code></td>
+                  <td><span class="module-badge badge-active">Active</span></td>
+                  <td>1,200 (840 enrolled)</td>
+                  <td>KSh 4,500,000</td>
+                </tr>
+                <tr>
+                  <td><strong>High-Value Avocado & Pepper Export</strong></td>
+                  <td><code>HV-AVO-26</code></td>
+                  <td><span class="module-badge badge-active">Active</span></td>
+                  <td>650 (512 enrolled)</td>
+                  <td>KSh 6,200,000</td>
+                </tr>
+                <tr>
+                  <td><strong>Sub-County Soil Acidity & NPK Rehab</strong></td>
+                  <td><code>SOIL-REHAB</code></td>
+                  <td><span class="module-badge badge-dev">Planning</span></td>
+                  <td>400 (120 enrolled)</td>
+                  <td>KSh 2,100,000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Activity Feed -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h4 class="panel-title"><i class="fas fa-clock-rotate-left" style="color: var(--status-preview); margin-right: 8px;"></i> Platform Activity</h4>
+            </div>
+            <div class="activity-list" id="activityFeedList">
+              <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-camera"></i></div>
+                <div class="activity-content">
+                  <div class="activity-title">Maize Diagnostic Scan Complete</div>
+                  <div class="activity-detail">Field Officer Amina scanned plot 'Solai North Plot 2' (Early Blight detected, 94.2% confidence).</div>
+                  <div class="activity-time">25 mins ago</div>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-user-plus"></i></div>
+                <div class="activity-content">
+                  <div class="activity-title">New Farmer Enrolled</div>
+                  <div class="activity-detail">Joseph Kamau enrolled into Smallholder Maize Initiative (3.5 acres, Nakuru).</div>
+                  <div class="activity-time">2 hours ago</div>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-flask-vial"></i></div>
+                <div class="activity-content">
+                  <div class="activity-title">NPK Nutrient Update</div>
+                  <div class="activity-detail">Soil NPK updated for 'Njoro Commercial Farm' (N: 48%, P: 32%, K: 28%).</div>
+                  <div class="activity-time">4 hours ago</div>
+                </div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div class="activity-content">
+                  <div class="activity-title">Commodity Alert: Maize KES 4,500/bag</div>
+                  <div class="activity-detail">Nairobi Wholesale Grain Market prices increased by 4.2% week-on-week.</div>
+                  <div class="activity-time">6 hours ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Shared Platform Shell Scripts -->
+  <script src="js/api-config.js"></script>
+  <script src="js/offline-sync.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/assistant-widget.js"></script>
+
+  <!-- Live Platform Overview Fetcher -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const token = window.AgroTrack.getAuthToken();
+        const response = await fetch(`${window.getBackendUrl()}/api/v1/platform/overview`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.metrics) {
+            document.getElementById("statFarms").textContent = data.metrics.activeFarms;
+            document.getElementById("statAcreage").textContent = data.metrics.monitoredAcreage;
+            document.getElementById("statFarmers").textContent = data.metrics.registeredFarmers.toLocaleString();
+            document.getElementById("statScans").textContent = data.metrics.diagnosticScans.toLocaleString();
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch dynamic overview metrics; using pre-rendered default metrics.", err);
+      }
+    });
+  </script>
+</body>
+</html>

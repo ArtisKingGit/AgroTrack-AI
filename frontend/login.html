@@ -1511,7 +1511,7 @@
     // Check if user is already authenticated and redirect to dashboard
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.location.replace("dashboard.html");
+        window.location.replace("overview.html");
       }
     });
 
@@ -1700,7 +1700,7 @@
       try {
         await signInWithEmailAndPassword(auth, email, password);
         progress.stop(true);
-        window.location.href = "dashboard.html";
+        window.location.href = "overview.html";
       } catch (err) {
         let msg = err.message.replace("Firebase: ", "");
         if (msg.includes("auth/invalid-credential") || msg.includes("auth/user-not-found")) {
@@ -1769,7 +1769,7 @@
         });
 
         progress.stop(true);
-        window.location.href = "dashboard.html";
+        window.location.href = "overview.html";
       } catch (err) {
         progress.stop(false, "Signup Failed");
         let msg = err.message.replace("Firebase: ", "");
@@ -1812,7 +1812,7 @@
           });
         }
         progress.stop(true);
-        window.location.href = "dashboard.html";
+        window.location.href = "overview.html";
       } catch (err) {
         progress.stop(false, "Google Failed");
         showError(err.message.replace("Firebase: ", ""));

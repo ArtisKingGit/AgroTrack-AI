@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Ensure repository root is on sys.path so 'backend' package imports always succeed
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, UploadFile, File
 # pyrefly: ignore [missing-import]
@@ -16,8 +24,14 @@ import asyncio
 import google.generativeai as genai
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
-from ai.classifier import predict_crop
-from ai.detector import detect_disease
+try:
+    from backend.ai.classifier import predict_crop
+    from backend.ai.detector import detect_disease
+    from backend.agrotrack.quality import is_valid_image_header
+except ImportError:
+    from ai.classifier import predict_crop
+    from ai.detector import detect_disease
+    from agrotrack.quality import is_valid_image_header
 
 # Force IPv4-only DNS resolution for outbound calls. On some container hosts
 # (e.g. Hugging Face Spaces) DNS advertises an IPv6 route to Google's APIs
@@ -60,7 +74,43 @@ if GEMINI_API_KEY:
 GEMINI_TIMEOUT_SECONDS = 20
 
 
-app = FastAPI()
+app = FastAPI(
+    title="AgroTrack AI Platform API",
+    description="Agricultural Intelligence and Development Management Platform — Core Foundation API",
+    version="1.0.0"
+)
+
+try:
+    from backend.api import router as api_v1_router
+    from backend.agrotrack.router import router as agrotrack_router
+    from backend.marketlens.router import router as marketlens_router
+    from backend.impactos.router import router as impactos_router
+    from backend.analyst.router import router as analyst_router
+except ImportError:
+    from api import router as api_v1_router
+    from agrotrack.router import router as agrotrack_router
+    from marketlens.router import router as marketlens_router
+    from impactos.router import router as impactos_router
+    from analyst.router import router as analyst_router
+
+app.include_router(api_v1_router)
+app.include_router(agrotrack_router)
+app.include_router(marketlens_router)
+app.include_router(impactos_router)
+app.include_router(analyst_router)
+
+# Initialize Firebase Admin SDK if service account key is configured
+try:
+    from backend.firebase import initialize_firebase
+    initialize_firebase()
+except ImportError:
+    try:
+        from firebase import initialize_firebase
+        initialize_firebase()
+    except Exception as e:
+        print(f"[!] Firebase Admin initialization notice: {e}")
+except Exception as e:
+    print(f"[!] Firebase Admin initialization notice: {e}")
 
 from typing import List, Optional, Any
 
@@ -74,13 +124,29 @@ class ChatRequest(BaseModel):
     scans: Optional[List[Any]] = None
     farms: Optional[List[Any]] = None
 
-# CORS
+# CORS Configuration (Production Hardened with Configurable Origins)
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
+allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+if not allowed_origins:
+    allowed_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Production Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
@@ -96,6 +162,9 @@ async def predict(image: UploadFile = File(...)):
     if len(image_bytes) > MAX_UPLOAD_BYTES:
         return JSONResponse(status_code=400, content={"error": "Image is too large. Maximum size is 10MB."})
 
+    if not is_valid_image_header(image_bytes):
+        return JSONResponse(status_code=400, content={"error": "Invalid image binary header. Please upload a genuine JPEG, PNG, or WEBP image."})
+
     try:
         # Get AI classification and health summary (runs the model once)
         result = predict_crop(image_bytes)
@@ -106,6 +175,8 @@ async def predict(image: UploadFile = File(...)):
 
         # Merge results
         result["boxes"] = detection.get("boxes", [])
+        result["severity_percentage"] = detection.get("severity_percentage", 0.0)
+        result["severity_level"] = detection.get("severity_level", "None (Healthy)")
 
         return result
     except Exception as e:
@@ -211,7 +282,8 @@ frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 if os.path.isdir(frontend_path):
     @app.get("/")
     async def read_index():
-        return FileResponse(os.path.join(frontend_path, "login.html"))
+        target_file = "index.html" if os.path.exists(os.path.join(frontend_path, "index.html")) else "login.html"
+        return FileResponse(os.path.join(frontend_path, target_file))
 
     # Mount frontend at root BUT after specific API routes to ensure they take precedence
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")

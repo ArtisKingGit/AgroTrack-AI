@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroTrack AI — AI Analyst Intelligence Hub</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="css/agrotrack.css">
+  <link rel="stylesheet" href="css/assistant-widget.css">
+
+  <style>
+    /* AI Analyst Specialized Theme Styles */
+    .analyst-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      height: calc(100vh - 160px);
+      min-height: 600px;
+    }
+    @media (max-width: 1024px) {
+      .analyst-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    /* Left Console: Chat Stream */
+    .chat-console {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .chat-console-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface-elevated);
+    }
+    .chat-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .chat-header-title .pulse-dot {
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+    .chat-history-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Message Bubbles */
+    .message-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 90%;
+    }
+    .message-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .message-row.analyst {
+      align-self: flex-start;
+    }
+    .msg-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .message-row.user .msg-avatar {
+      background: rgba(56, 189, 248, 0.15);
+      color: #0284c7;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .message-row.analyst .msg-avatar {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .msg-bubble {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      font-size: 0.88rem;
+      color: var(--text-primary);
+      line-height: 1.55;
+    }
+    .message-row.user .msg-bubble {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .message-row.analyst .msg-bubble {
+      border-bottom-left-radius: 2px;
+    }
+
+    /* Structured Section Blocks */
+    .structured-block {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+    }
+    .block-facts {
+      background: rgba(34, 197, 94, 0.06);
+      border-left: 3px solid #16a34a;
+    }
+    .block-facts strong { color: #16a34a; }
+    .block-estimates {
+      background: rgba(14, 165, 233, 0.06);
+      border-left: 3px solid #0284c7;
+      margin-top: 10px;
+    }
+    .block-estimates strong { color: #0284c7; }
+    .block-suggestions {
+      background: rgba(168, 85, 247, 0.06);
+      border-left: 3px solid #9333ea;
+      margin-top: 10px;
+    }
+    .block-suggestions strong { color: #9333ea; }
+
+    /* Source Citation Badges */
+    .sources-wrap {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+    .source-pill i {
+      color: var(--accent);
+    }
+
+    /* Follow Up Suggestions */
+    .follow-ups-wrap {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .follow-up-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: 14px;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .follow-up-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--bg-surface-elevated);
+    }
+
+    /* Chat Input Bar */
+    .chat-input-bar {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-surface-elevated);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: none;
+      min-height: 48px;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+    .chat-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .btn-send {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      width: 48px; height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+    .btn-send:hover {
+      background: var(--accent-hover, #16a34a);
+    }
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Right Sidebar: Context & Capability Inspector */
+    .analyst-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    .context-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+    }
+    .context-card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .audit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .audit-stat-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+    .audit-stat-box strong {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .audit-stat-box span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .grounding-shield-pill {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    /* Suggested Questions List */
+    .prompt-chip {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+      text-align: left;
+      width: 100%;
+    }
+    .prompt-chip:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+    }
+    .prompt-chip i {
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="appSidebar"></aside>
+
+    <main class="app-main">
+      <header id="appTopbar"></header>
+
+      <div class="content-wrapper">
+        <div class="page-header" style="margin-bottom: 18px;">
+          <div>
+            <h2 class="page-title">AI Analyst Intelligence Hub</h2>
+            <p class="page-subtitle">Cross-Platform Grounded Agronomic Intelligence — Bridging Farm Plots, Market Dynamics, and Impact Accountability</p>
+          </div>
+          <div>
+            <button class="btn-secondary" onclick="clearConversation()">
+              <i class="fas fa-trash-can"></i> Clear Conversation
+            </button>
+          </div>
+        </div>
+
+        <div class="analyst-layout">
+          <!-- Left: Conversational Stream -->
+          <div class="chat-console">
+            <div class="chat-console-header">
+              <div class="chat-header-title">
+                <div class="pulse-dot"></div>
+                <span>Platform AI Analyst</span>
+                <span class="badge badge-active" style="font-size: 0.7rem; margin-left: 6px;">Data-Grounded</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                <i class="fas fa-lock" style="color: var(--accent);"></i> Organisation Partitioned
+              </div>
+            </div>
+
+            <div class="chat-history-container" id="chatHistoryContainer">
+              <!-- Welcome greeting -->
+              <div class="message-row analyst">
+                <div class="msg-avatar"><i class="fas fa-brain"></i></div>
+                <div class="msg-bubble">
+                  <p style="margin: 0 0 10px 0; font-weight: 600; color: var(--accent);">
+                    Welcome to the AgroTrack AI Analyst
+                  </p>
+                  <p style="margin: 0 0 10px 0;">
+                    I provide grounded answers across your organisation's data in <strong>AgroTrack</strong> (farms & crop diseases), <strong>MarketLens</strong> (commodity pricing & regional spreads), and <strong>ImpactOS</strong> (projects, targets & beneficiaries).
+                  </p>
+                  <p style="margin: 0 0 10px 0; font-size: 0.8rem; color: var(--text-muted);">
+                    I operate under strict data-grounding rules: I will never invent commodity prices, beneficiary totals, or project outcomes. Click any suggested query on the right or type your question below.
+                  </p>
+                  <div class="follow-ups-wrap">
+                    <button class="follow-up-btn" onclick="sendPrompt('Which farms have recorded the most crop disease cases?')">Which farms have recorded the most crop disease cases?</button>
+                    <button class="follow-up-btn" onclick="sendPrompt('Which projects are falling behind their targets?')">Which projects are falling behind their targets?</button>
+                    <button class="follow-up-btn" onclick="sendPrompt('Which commodities have the highest recorded prices in Rift Valley?')">Highest prices in Rift Valley?</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="chat-input-bar">
+              <textarea id="chatInputText" class="chat-textarea" placeholder="Ask an analytical question across farms, market prices, or projects..." rows="1" onkeydown="handleTextareaKey(event)"></textarea>
+              <button class="btn-send" id="btnSendQuery" onclick="submitUserQuery()">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Context & Capabilities Inspector -->
+          <div class="analyst-sidebar">
+            <!-- Authorised Grounding Audit -->
+            <div class="context-card">
+              <div class="context-card-title">
+                <i class="fas fa-shield-halved" style="color: var(--accent);"></i>
+                <span>Authorised Context</span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 12px;" id="orgIdentityText">
+                Organisation: <strong>GreenValley AgTech</strong> &bull; Role: <strong id="userRoleBadge">Analyst</strong>
+              </div>
+
+              <div class="audit-grid">
+                <div class="audit-stat-box">
+                  <strong id="statFarms">2</strong>
+                  <span>Monitored Farms</span>
+                </div>
+                <div class="audit-stat-box">
+                  <strong id="statScans">5</strong>
+                  <span>Pathology Scans</span>
+                </div>
+                <div class="audit-stat-box">
+                  <strong id="statPrices">10</strong>
+                  <span>Price Records</span>
+                </div>
+                <div class="audit-stat-box">
+                  <strong id="statProjects">2</strong>
+                  <span>Active Projects</span>
+                </div>
+              </div>
+
+              <div class="grounding-shield-pill">
+                <i class="fas fa-check-circle"></i> Anti-Hallucination Grounding Enforced
+              </div>
+            </div>
+
+            <!-- Recommended Analytical Inquiries -->
+            <div class="context-card">
+              <div class="context-card-title">
+                <i class="fas fa-lightbulb" style="color: #f59e0b;"></i>
+                <span>Sample Inquiries</span>
+              </div>
+              
+              <button class="prompt-chip" onclick="sendPrompt('Which farms have recorded the most crop disease cases?')">
+                <i class="fas fa-virus"></i>
+                <span>Which farms have recorded the most crop disease cases?</span>
+              </button>
+
+              <button class="prompt-chip" onclick="sendPrompt('Which commodities have the highest recorded prices in Rift Valley?')">
+                <i class="fas fa-chart-line"></i>
+                <span>Highest recorded commodity prices in Rift Valley?</span>
+              </button>
+
+              <button class="prompt-chip" onclick="sendPrompt('Which projects are falling behind their targets?')">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>Which projects are falling behind their targets?</span>
+              </button>
+
+              <button class="prompt-chip" onclick="sendPrompt('How many beneficiaries have participated in the Smallholder Maize project?')">
+                <i class="fas fa-users"></i>
+                <span>How many beneficiaries in Smallholder Maize project?</span>
+              </button>
+
+              <button class="prompt-chip" onclick="sendPrompt('What agricultural risks have been recorded recently?')">
+                <i class="fas fa-cloud-bolt"></i>
+                <span>What agricultural risks have been recorded recently?</span>
+              </button>
+
+              <button class="prompt-chip" onclick="sendPrompt('Summarise field activities during a selected reporting period.')">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Summarise field activities during reporting period.</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api-config.js"></script>
+  <script src="js/offline-sync.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/assistant-widget.js"></script>
+
+  <script>
+    let conversationHistory = [];
+
+    function getAuthHeaders() {
+      const token = localStorage.getItem("agrotrack-auth-token") || "mock-token-admin";
+      return {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      };
+    }
+
+    function handleTextareaKey(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submitUserQuery();
+      }
+    }
+
+    function sendPrompt(text) {
+      const input = document.getElementById("chatInputText");
+      input.value = text;
+      submitUserQuery();
+    }
+
+    function clearConversation() {
+      conversationHistory = [];
+      const container = document.getElementById("chatHistoryContainer");
+      container.innerHTML = `
+        <div class="message-row analyst">
+          <div class="msg-avatar"><i class="fas fa-brain"></i></div>
+          <div class="msg-bubble">
+            <p style="margin: 0;">Conversation cleared. Ask any analytical question across farms, market pricing, or project progress.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadContextSummary() {
+      try {
+        const res = await fetch("/api/v1/analyst/context-summary", { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById("orgIdentityText").innerHTML = `Organisation: <strong>${data.organisationId}</strong> &bull; Role: <strong>${data.userRole}</strong>`;
+        document.getElementById("userRoleBadge").textContent = data.userRole;
+
+        if (data.recordCounts) {
+          document.getElementById("statFarms").textContent = data.recordCounts.monitoredFarms;
+          document.getElementById("statScans").textContent = data.recordCounts.diagnosticScans;
+          document.getElementById("statPrices").textContent = data.recordCounts.priceRecords;
+          document.getElementById("statProjects").textContent = data.recordCounts.projects;
+        }
+      } catch (err) {
+        console.error("Failed to load context summary:", err);
+      }
+    }
+
+    async function submitUserQuery() {
+      const input = document.getElementById("chatInputText");
+      const query = input.value.trim();
+      if (!query) return;
+
+      const container = document.getElementById("chatHistoryContainer");
+      const btn = document.getElementById("btnSendQuery");
+
+      // Append User message
+      const userRow = document.createElement("div");
+      userRow.className = "message-row user";
+      userRow.innerHTML = `
+        <div class="msg-avatar"><i class="fas fa-user"></i></div>
+        <div class="msg-bubble">${escapeHtml(query)}</div>
+      `;
+      container.appendChild(userRow);
+      input.value = "";
+      container.scrollTop = container.scrollHeight;
+
+      // Append Loading indicator
+      const loadingRow = document.createElement("div");
+      loadingRow.className = "message-row analyst";
+      loadingRow.id = "analystLoadingRow";
+      loadingRow.innerHTML = `
+        <div class="msg-avatar"><i class="fas fa-brain"></i></div>
+        <div class="msg-bubble" style="display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-spinner fa-spin" style="color: var(--accent);"></i>
+          <span>Retrieving authorised records and synthesizing grounded findings...</span>
+        </div>
+      `;
+      container.appendChild(loadingRow);
+      container.scrollTop = container.scrollHeight;
+
+      btn.disabled = true;
+
+      try {
+        const res = await fetch("/api/v1/analyst/query", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            query: query,
+            history: conversationHistory.slice(-4)
+          })
+        });
+
+        const loading = document.getElementById("analystLoadingRow");
+        if (loading) loading.remove();
+
+        if (!res.ok) {
+          const err = await res.json();
+          renderErrorMessage(err.detail || "Error querying AI Analyst");
+          return;
+        }
+
+        const data = await res.json();
+        renderAnalystResponse(data);
+
+        // Update history
+        conversationHistory.push({ role: "user", content: query });
+        conversationHistory.push({ role: "model", content: data.answer });
+      } catch (err) {
+        console.error("Query failed:", err);
+        const loading = document.getElementById("analystLoadingRow");
+        if (loading) loading.remove();
+        renderErrorMessage("Network connection error. Please ensure backend is reachable.");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderAnalystResponse(data) {
+      const container = document.getElementById("chatHistoryContainer");
+      const row = document.createElement("div");
+      row.className = "message-row analyst";
+
+      // Build structured sections
+      let factsHtml = "";
+      if (data.facts && data.facts.length) {
+        factsHtml = `
+          <div class="structured-block block-facts">
+            <strong><i class="fas fa-check-circle"></i> Verified Database Facts:</strong>
+            <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+              ${data.facts.map(f => `<li>${escapeHtml(f)}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      }
+
+      let estimatesHtml = "";
+      if (data.estimates && data.estimates.length) {
+        estimatesHtml = `
+          <div class="structured-block block-estimates">
+            <strong><i class="fas fa-chart-pie"></i> Analytical Estimates & Projections:</strong>
+            <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+              ${data.estimates.map(e => `<li>${escapeHtml(e)}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      }
+
+      let suggestionsHtml = "";
+      if (data.suggestions && data.suggestions.length) {
+        suggestionsHtml = `
+          <div class="structured-block block-suggestions">
+            <strong><i class="fas fa-lightbulb"></i> AI Recommendations & Actions:</strong>
+            <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+              ${data.suggestions.map(s => `<li>${escapeHtml(s)}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      }
+
+      // Build source citation badges
+      let sourcesHtml = "";
+      if (data.sources && data.sources.length) {
+        sourcesHtml = `
+          <div class="sources-wrap">
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Sources:</span>
+            ${data.sources.map(s => `
+              <span class="source-pill" title="${escapeHtml(s.snippet || '')}">
+                <i class="fas fa-database"></i> [${escapeHtml(s.module)}] ${escapeHtml(s.title)}
+              </span>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      // Build follow up buttons
+      let followUpsHtml = "";
+      if (data.suggestedFollowUps && data.suggestedFollowUps.length) {
+        followUpsHtml = `
+          <div class="follow-ups-wrap" style="margin-top: 12px;">
+            ${data.suggestedFollowUps.map(fu => `
+              <button class="follow-up-btn" onclick="sendPrompt('${escapeHtml(fu)}')">${escapeHtml(fu)}</button>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      // Missing data notice banner
+      let missingNoticeHtml = "";
+      if (data.missingDataNotice) {
+        missingNoticeHtml = `
+          <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 4px; font-size: 0.8rem; color: #d97706; margin-bottom: 10px;">
+            <i class="fas fa-info-circle"></i> ${escapeHtml(data.missingDataNotice)}
+          </div>
+        `;
+      }
+
+      row.innerHTML = `
+        <div class="msg-avatar"><i class="fas fa-brain"></i></div>
+        <div class="msg-bubble">
+          ${missingNoticeHtml}
+          <div style="white-space: pre-wrap;">${escapeHtml(data.answer)}</div>
+          ${factsHtml}
+          ${estimatesHtml}
+          ${suggestionsHtml}
+          ${sourcesHtml}
+          ${followUpsHtml}
+        </div>
+      `;
+
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderErrorMessage(msg) {
+      const container = document.getElementById("chatHistoryContainer");
+      const row = document.createElement("div");
+      row.className = "message-row analyst";
+      row.innerHTML = `
+        <div class="msg-avatar" style="color: #ef4444;"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="msg-bubble" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.08); color: #f87171;">
+          <strong>Error:</strong> ${escapeHtml(msg)}
+        </div>
+      `;
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      loadContextSummary();
+    });
+  </script>
+</body>
+</html>

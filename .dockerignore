@@ -9,3 +9,7 @@ backend/.env
 **/__pycache__/
 *.pyc
 .DS_Store
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+backend/serviceAccountKey.json
+backend/*firebase*.json

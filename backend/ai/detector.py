@@ -34,6 +34,11 @@ def detect_disease(image_bytes, diagnosis_data):
             # Fill small holes/spots to denoise
             bin_mask = pcv.fill(bin_mask, 200)
 
+            # Compute disease spot pixel coverage / severity
+            diseased_pixels = cv2.countNonZero(bin_mask)
+            total_pixels = img_cv.shape[0] * img_cv.shape[1]
+            severity_percentage = round((diseased_pixels / total_pixels) * 100, 2)
+
             # Find contours directly on binary mask using OpenCV
             contours, _ = cv2.findContours(bin_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -46,9 +51,29 @@ def detect_disease(image_bytes, diagnosis_data):
         except Exception as e:
             print(f"Error in PlantCV spot detection: {e}")
 
+    # Determine severity label
+    if is_healthy or diagnosis_data.get("is_soil"):
+        severity_percentage = 0.0
+        severity_level = "None (Healthy)"
+    elif len(boxes) > 0:
+        if severity_percentage < 3.0:
+            severity_level = "Mild (Early Stage)"
+        elif severity_percentage < 15.0:
+            severity_level = "Moderate"
+        else:
+            severity_level = "Severe (Advanced Infection)"
+    else:
+        # Fallback for diffuse discoloration without discrete spot contours
+        severity_percentage = 10.0
+        severity_level = "Diffuse Infection"
+
     # Fallback: if no specific spots found, use full image box (only for diseased/unhealthy scans)
     if not boxes and img_cv is not None and not is_healthy:
         h, w, _ = img_cv.shape
         boxes = [{"x": 0, "y": 0, "width": w, "height": h}]
 
-    return {"boxes": boxes}
+    return {
+        "boxes": boxes,
+        "severity_percentage": severity_percentage,
+        "severity_level": severity_level
+    }

@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroTrack AI — AgroTrack Operations</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet GIS Map Styles -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Platform Styles -->
+  <link rel="stylesheet" href="css/agrotrack.css">
+  <link rel="stylesheet" href="css/assistant-widget.css">
+
+  <style>
+    /* Section Tabs */
+    .op-nav-bar {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .op-tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      padding: 10px 18px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .op-tab-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    }
+    .op-tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .op-tab-btn .badge-pill {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 0.72rem;
+    }
+    .op-tab-btn.active .badge-pill {
+      background: var(--status-active-bg);
+      color: var(--accent);
+    }
+
+    /* Action & Filter Toolbar */
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .toolbar-filters {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .search-input-box {
+      position: relative;
+      min-width: 240px;
+      flex: 1;
+      max-width: 360px;
+    }
+    .search-input-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .search-input-box input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 8px 12px 8px 34px;
+      font-size: 0.88rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .search-input-box input:focus {
+      border-color: var(--accent);
+    }
+    .filter-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filter-select:focus {
+      border-color: var(--accent);
+    }
+    .filter-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-surface);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .filter-checkbox-label input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .btn-action-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 9px 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+    .btn-action-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-action-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-action-secondary:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-strong);
+    }
+
+    /* Status Pills */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .status-pill.active {
+      background: var(--status-active-bg);
+      color: var(--status-active);
+    }
+    .status-pill.archived {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+    }
+
+    /* Badges & Tags */
+    .tag-chip {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      margin-right: 4px;
+    }
+
+    /* Activity Badges */
+    .act-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .act-badge.visit { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .act-badge.inspection { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .act-badge.planting { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .act-badge.harvest { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .act-badge.irrigation { background: rgba(14, 165, 233, 0.15); color: #38bdf8; }
+    .act-badge.fertilizer { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .act-badge.other { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+
+    /* Modals */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(2, 6, 23, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .modal-close-btn:hover {
+      color: var(--text-primary);
+    }
+    .modal-body {
+      padding: 24px;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--bg-surface-elevated);
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+    }
+
+    /* Form Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .form-control {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--accent);
+    }
+    .form-helper {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* GIS & Intelligence Workbench Styles */
+    .gis-map-card, .workbench-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    #fieldMap {
+      height: 420px;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      z-index: 10;
+    }
+    .workbench-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .wb-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wb-tab-btn.active {
+      background: var(--primary-subtle);
+      border-color: rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+    }
+    .tool-output-panel {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      display: none;
+    }
+
+    /* Profile Drawer/Card Details */
+    .profile-hero {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-surface-elevated);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+    }
+    .profile-avatar-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .profile-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .detail-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+    }
+    .detail-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .detail-val {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* History Timeline */
+    .history-timeline {
+      position: relative;
+      padding-left: 28px;
+      margin-top: 12px;
+    }
+    .history-timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: var(--border-subtle);
+    }
+    .timeline-node {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .timeline-node-dot {
+      position: absolute;
+      left: -28px;
+      top: 2px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-surface-elevated);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: var(--accent);
+    }
+    .timeline-node-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="appSidebar"></aside>
+
+    <main class="app-main">
+      <header id="appTopbar"></header>
+
+      <div class="content-wrapper">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 class="page-title">AgroTrack Operations</h2>
+            <p class="page-subtitle">Farmer & Field Registry, Agricultural Activities, GIS Mapping, and Field Intelligence</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-action-primary" id="btnTopRegisterFarmer" onclick="openFarmerModal()">
+              <i class="fas fa-user-plus"></i> Register Farmer
+            </button>
+            <button class="btn-action-secondary" id="btnTopLogActivity" onclick="openActivityModal()">
+              <i class="fas fa-clipboard-check"></i> Log Activity
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Live KPI Strip (Phase 3 Spec 5) -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Registered Farmers</span>
+              <div class="stat-icon icon-green"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="stat-value" id="kpiFarmers">--</div>
+            <div class="stat-meta">
+              <i class="fas fa-check-circle" style="color: var(--accent);"></i>
+              <span id="kpiFarmersSub">Querying database...</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Registered Plots</span>
+              <div class="stat-icon icon-blue"><i class="fas fa-layer-group"></i></div>
+            </div>
+            <div class="stat-value" id="kpiPlots">--</div>
+            <div class="stat-meta">
+              <i class="fas fa-chart-area" style="color: #38bdf8;"></i>
+              <span id="kpiAcreageSub">-- total acreage</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Farm Visits & Inspections</span>
+              <div class="stat-icon icon-purple"><i class="fas fa-clipboard-list"></i></div>
+            </div>
+            <div class="stat-value" id="kpiVisits">--</div>
+            <div class="stat-meta">
+              <i class="fas fa-tasks" style="color: #c084fc;"></i>
+              <span id="kpiActivitiesSub">-- total activities logged</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">Monitored Crops</span>
+              <div class="stat-icon icon-amber"><i class="fas fa-wheat-awn"></i></div>
+            </div>
+            <div class="stat-value" id="kpiCropsCount">--</div>
+            <div class="stat-meta">
+              <i class="fas fa-seedling" style="color: #fbbf24;"></i>
+              <span id="kpiCropsList">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Cards Grid -->
+        <div class="modules-grid" style="margin-bottom: 24px;">
+          <a href="manage.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-layer-group"></i></div>
+              <span class="module-badge badge-active">Operational</span>
+            </div>
+            <h4 class="module-title">Farm Plot Manager</h4>
+            <p class="module-description">Deep multi-plot registry with live NPK soil nutrients, irrigation specs, and harvest yield estimators.</p>
+            <div class="module-action"><span>Open Plot Manager</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <a href="dashboard.html#scanner" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-camera"></i></div>
+              <span class="module-badge badge-active">CNN MobileNetV2</span>
+            </div>
+            <h4 class="module-title">AI Leaf Disease Scanner</h4>
+            <p class="module-description">Upload leaf photos for instant diagnostic inference, PlantCV spot detection, and treatments.</p>
+            <div class="module-action"><span>Launch Scanner</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <a href="recommendations.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-cloud-sun-rain"></i></div>
+              <span class="module-badge badge-active">Open-Meteo Engine</span>
+            </div>
+            <h4 class="module-title">Climate & Crop Advisor</h4>
+            <p class="module-description">Live weather integration and month-by-month crop profitability ranking algorithm.</p>
+            <div class="module-action"><span>View Recommendations</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+
+          <a href="expenses.html" class="module-card">
+            <div class="module-header">
+              <div class="module-icon"><i class="fas fa-wallet"></i></div>
+              <span class="module-badge badge-active">Budget Safety</span>
+            </div>
+            <h4 class="module-title">Farm Expenses & Budget</h4>
+            <p class="module-description">Track expenditures across seed, fertilizer, and labor with visual budget safety meters.</p>
+            <div class="module-action"><span>Manage Expenses</span> <i class="fas fa-arrow-right"></i></div>
+          </a>
+        </div>
+
+        <!-- Main Operations Navigation Tabs -->
+        <div class="op-nav-bar">
+          <button class="op-tab-btn active" onclick="switchOpTab('farmers')">
+            <i class="fas fa-users"></i> Farmer Directory
+            <span class="badge-pill" id="tabFarmerCount">0</span>
+          </button>
+          <button class="op-tab-btn" onclick="switchOpTab('activities')">
+            <i class="fas fa-clipboard-check"></i> Field Activities & Visits
+            <span class="badge-pill" id="tabActivityCount">0</span>
+          </button>
+          <button class="op-tab-btn" onclick="switchOpTab('plots')">
+            <i class="fas fa-vector-square"></i> Farm Plots & History
+            <span class="badge-pill" id="tabPlotCount">0</span>
+          </button>
+          <button class="op-tab-btn" onclick="switchOpTab('map')">
+            <i class="fas fa-map-location-dot"></i> Geospatial GIS Map
+          </button>
+          <button class="op-tab-btn" onclick="switchOpTab('workbench')">
+            <i class="fas fa-microscope"></i> Agronomic Intelligence Tools
+          </button>
+        </div>
+
+        <!-- ──────────────── TAB 1: FARMER DIRECTORY & MANAGEMENT ──────────────── -->
+        <div id="section-farmers" class="op-section">
+          <div class="toolbar-row">
+            <div class="toolbar-filters">
+              <div class="search-input-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="farmerSearchInput" placeholder="Search by name, ID, code, phone, village..." oninput="debounceFarmerSearch()">
+              </div>
+              <select id="farmerStatusFilter" class="filter-select" onchange="loadFarmers()">
+                <option value="active">Active Farmers</option>
+                <option value="archived">Archived Farmers</option>
+                <option value="all">All Records</option>
+              </select>
+              <select id="farmerCropFilter" class="filter-select" onchange="loadFarmers()">
+                <option value="">All Crop Types</option>
+                <option value="Maize">Maize</option>
+                <option value="Tomato">Tomato</option>
+                <option value="Coffee">Coffee</option>
+                <option value="Tea">Tea</option>
+                <option value="Beans">Beans</option>
+              </select>
+              <label class="filter-checkbox-label" title="Filter to farmers assigned to the logged-in field officer">
+                <input type="checkbox" id="farmerMyAssignmentsOnly" onchange="toggleMyAssignments(this.checked)">
+                <i class="fas fa-user-tag"></i> My Assigned Farmers
+              </label>
+            </div>
+            <div>
+              <button class="btn-action-primary" onclick="openFarmerModal()">
+                <i class="fas fa-plus"></i> New Farmer
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card" style="padding: 0; overflow-x: auto;">
+            <table class="data-table" id="farmersTable">
+              <thead>
+                <tr>
+                  <th>Farmer Code</th>
+                  <th>Full Name</th>
+                  <th>Contact & Location</th>
+                  <th>Projects</th>
+                  <th>Plots Owned</th>
+                  <th>Total Acreage</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="farmersTableBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin"></i> Loading farmer directory...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ──────────────── TAB 2: FIELD ACTIVITIES & VISITS ──────────────── -->
+        <div id="section-activities" class="op-section" style="display: none;">
+          <div class="toolbar-row">
+            <div class="toolbar-filters">
+              <select id="activityTypeFilter" class="filter-select" onchange="loadActivities()">
+                <option value="">All Activity Types</option>
+                <option value="Farm Visit">Farm Visits</option>
+                <option value="Crop Inspection">Crop Inspections</option>
+                <option value="Planting">Planting</option>
+                <option value="Harvest">Harvest Records</option>
+                <option value="Irrigation">Irrigation Events</option>
+                <option value="Fertilizer Application">Fertilizer Applications</option>
+                <option value="Soil Sampling">Soil Sampling</option>
+                <option value="Pest Treatment">Pest Treatments</option>
+              </select>
+              <select id="activityFarmFilter" class="filter-select" onchange="loadActivities()">
+                <option value="">All Farm Plots</option>
+              </select>
+              <label class="filter-checkbox-label">
+                <input type="checkbox" id="activityMySubmittedOnly" onchange="loadActivities()">
+                <i class="fas fa-user-check"></i> My Submitted Activities
+              </label>
+            </div>
+            <div>
+              <button class="btn-action-primary" onclick="openActivityModal()">
+                <i class="fas fa-plus"></i> Log Activity
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card" style="padding: 0; overflow-x: auto;">
+            <table class="data-table" id="activitiesTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Activity Type</th>
+                  <th>Farm Plot</th>
+                  <th>Farmer</th>
+                  <th>Field Officer</th>
+                  <th>Observations & Notes</th>
+                  <th>Metrics</th>
+                </tr>
+              </thead>
+              <tbody id="activitiesTableBody">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin"></i> Loading field activities...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ──────────────── TAB 3: FARM PLOTS & CHRONOLOGICAL HISTORY ──────────────── -->
+        <div id="section-plots" class="op-section" style="display: none;">
+          <div class="toolbar-row">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+              Active farm plots linked to registered farmers. Click <strong>History Timeline</strong> to view planting, visits, scans, and expenses.
+            </p>
+            <a href="manage.html" class="btn-action-secondary">
+              <i class="fas fa-external-link-alt"></i> Open Full Plot Manager
+            </a>
+          </div>
+
+          <div class="panel-card" style="padding: 0; overflow-x: auto;">
+            <table class="data-table" id="plotsTable">
+              <thead>
+                <tr>
+                  <th>Plot Name</th>
+                  <th>Linked Farmer</th>
+                  <th>Location (GPS)</th>
+                  <th>Size</th>
+                  <th>Current Crop</th>
+                  <th>Soil & Irrigation</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">History</th>
+                </tr>
+              </thead>
+              <tbody id="plotsTableBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin"></i> Loading farm plots...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ──────────────── TAB 4: GEOSPATIAL GIS MAP ──────────────── -->
+        <div id="section-map" class="op-section" style="display: none;">
+          <div class="gis-map-card">
+            <div class="gis-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <div class="gis-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-map-location-dot" style="color: var(--accent);"></i>
+                <span>Active Organisation Farm Plot Map (Leaflet GIS)</span>
+              </div>
+              <span class="module-badge badge-active" id="plotCounterBadge">Loading Plots...</span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">
+              Geospatial field boundary and GPS plot tracking. Click any marker pin to inspect soil profile, current crop, and health assessment.
+            </p>
+            <div id="fieldMap"></div>
+          </div>
+        </div>
+
+        <!-- ──────────────── TAB 5: INTELLIGENCE WORKBENCH ──────────────── -->
+        <div id="section-workbench" class="op-section" style="display: none;">
+          <div class="workbench-card">
+            <div style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+              <i class="fas fa-microscope" style="color: var(--accent);"></i>
+              <span>Agricultural Intelligence Workbench</span>
+            </div>
+
+            <div class="workbench-tabs">
+              <button class="wb-tab-btn active" onclick="switchWbTab('risk')"><i class="fas fa-shield-virus"></i> Environmental Disease Risk</button>
+              <button class="wb-tab-btn" onclick="switchWbTab('irrigation')"><i class="fas fa-droplet"></i> Smart Irrigation Advice</button>
+              <button class="wb-tab-btn" onclick="switchWbTab('fertilizer')"><i class="fas fa-flask"></i> Soil NPK Fertilizer Balancer</button>
+              <button class="wb-tab-btn" onclick="switchWbTab('profitability')"><i class="fas fa-chart-pie"></i> Profitability Simulator</button>
+            </div>
+
+            <!-- Risk Tool -->
+            <div id="wb-risk" class="wb-tool-pane">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Target Crop</label>
+                  <select id="riskCrop" class="form-control">
+                    <option value="Tomato">Tomato</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Potato">Potato</option>
+                    <option value="Beans">Beans</option>
+                    <option value="Wheat">Wheat</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Ambient Temp (°C)</label>
+                  <input type="number" id="riskTemp" class="form-control" value="24.5" step="0.5">
+                </div>
+                <div class="form-group">
+                  <label>Relative Humidity (%)</label>
+                  <input type="number" id="riskHum" class="form-control" value="82" min="10" max="100">
+                </div>
+                <div class="form-group">
+                  <label>Rainfall (mm)</label>
+                  <input type="number" id="riskPrecip" class="form-control" value="8.0" step="0.5">
+                </div>
+              </div>
+              <button class="btn-action-primary" onclick="runDiseaseRisk()"><i class="fas fa-calculator"></i> Calculate Pathogen Risk</button>
+              <div id="riskOutput" class="tool-output-panel"></div>
+            </div>
+
+            <!-- Irrigation Tool -->
+            <div id="wb-irrigation" class="wb-tool-pane" style="display: none;">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Crop</label>
+                  <input type="text" id="irrCrop" class="form-control" value="Tomato">
+                </div>
+                <div class="form-group">
+                  <label>Soil Type</label>
+                  <select id="irrSoil" class="form-control">
+                    <option value="Loamy">Loamy</option>
+                    <option value="Clay">Clay</option>
+                    <option value="Sandy">Sandy</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Temperature (°C)</label>
+                  <input type="number" id="irrTemp" class="form-control" value="28.0">
+                </div>
+                <div class="form-group">
+                  <label>24h Rainfall (mm)</label>
+                  <input type="number" id="irrPrecip" class="form-control" value="0.0">
+                </div>
+              </div>
+              <button class="btn-action-primary" onclick="runIrrigation()"><i class="fas fa-droplet"></i> Compute Irrigation Quota</button>
+              <div id="irrigationOutput" class="tool-output-panel"></div>
+            </div>
+
+            <!-- Fertilizer Tool -->
+            <div id="wb-fertilizer" class="wb-tool-pane" style="display: none;">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Crop</label>
+                  <input type="text" id="fertCrop" class="form-control" value="Maize">
+                </div>
+                <div class="form-group">
+                  <label>Soil Nitrogen (N %)</label>
+                  <input type="number" id="fertN" class="form-control" value="25.0">
+                </div>
+                <div class="form-group">
+                  <label>Phosphorus (P %)</label>
+                  <input type="number" id="fertP" class="form-control" value="20.0">
+                </div>
+                <div class="form-group">
+                  <label>Potassium (K %)</label>
+                  <input type="number" id="fertK" class="form-control" value="22.0">
+                </div>
+              </div>
+              <button class="btn-action-primary" onclick="runFertilizer()"><i class="fas fa-flask"></i> Balance Soil NPK</button>
+              <div id="fertilizerOutput" class="tool-output-panel"></div>
+            </div>
+
+            <!-- Profitability Tool -->
+            <div id="wb-profitability" class="wb-tool-pane" style="display: none;">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Crop</label>
+                  <input type="text" id="profCrop" class="form-control" value="Tomato">
+                </div>
+                <div class="form-group">
+                  <label>Acreage (Acres)</label>
+                  <input type="number" id="profAcreage" class="form-control" value="2.5" step="0.5">
+                </div>
+                <div class="form-group">
+                  <label>Market Price per Kg (KES)</label>
+                  <input type="number" id="profPrice" class="form-control" value="60.0">
+                </div>
+              </div>
+              <button class="btn-action-primary" onclick="runProfitability()"><i class="fas fa-coins"></i> Simulate Yield & ROI</button>
+              <div id="profitabilityOutput" class="tool-output-panel"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ──────────────── MODAL 1: REGISTER / EDIT FARMER ──────────────── -->
+  <div class="modal-backdrop" id="farmerModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="farmerModalTitle"><i class="fas fa-user-plus" style="color: var(--accent);"></i> Register Farmer</h3>
+        <button class="modal-close-btn" onclick="closeModal('farmerModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="farmerForm" onsubmit="handleFarmerSubmit(event)">
+        <input type="hidden" id="editFarmerId" value="">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>First Name *</label>
+              <input type="text" id="fFirstName" class="form-control" required placeholder="e.g. Joseph">
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input type="text" id="fLastName" class="form-control" required placeholder="e.g. Kamau">
+            </div>
+            <div class="form-group">
+              <label>National ID / Gov ID</label>
+              <input type="text" id="fNationalId" class="form-control" placeholder="e.g. 29384756">
+              <span class="form-helper">Unique identification per organisation</span>
+            </div>
+            <div class="form-group">
+              <label>Farmer Code</label>
+              <input type="text" id="fFarmerCode" class="form-control" placeholder="Auto-generated if empty">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="text" id="fPhone" class="form-control" placeholder="e.g. +254712345678">
+            </div>
+            <div class="form-group">
+              <label>Gender</label>
+              <select id="fGender" class="form-control">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Ward / Sub-County</label>
+              <input type="text" id="fWard" class="form-control" placeholder="e.g. Rongai">
+            </div>
+            <div class="form-group">
+              <label>Village</label>
+              <input type="text" id="fVillage" class="form-control" placeholder="e.g. Milmet">
+            </div>
+            <div class="form-group">
+              <label>GPS Latitude (-90 to 90)</label>
+              <input type="number" id="fLat" class="form-control" step="0.000001" min="-90" max="90" placeholder="-0.180000">
+            </div>
+            <div class="form-group">
+              <label>GPS Longitude (-180 to 180)</label>
+              <input type="number" id="fLng" class="form-control" step="0.000001" min="-180" max="180" placeholder="36.000000">
+            </div>
+            <div class="form-group">
+              <label>Assigned Field Officer</label>
+              <select id="fOfficer" class="form-control">
+                <option value="usr_field_003">Amina Otieno (Field Officer)</option>
+                <option value="usr_mgr_002">David Kiprop (Project Manager)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Enrolled Project</label>
+              <select id="fProject" class="form-control">
+                <option value="proj_gv_maize_scale">GreenValley Maize Scaling Initiative</option>
+                <option value="proj_gv_horticulture">Highland Horticulture Pilot</option>
+              </select>
+            </div>
+          </div>
+          <div id="farmerFormError" style="display: none; color: #ef4444; font-size: 0.85rem; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-top: 10px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-action-secondary" onclick="closeModal('farmerModal')">Cancel</button>
+          <button type="submit" class="btn-action-primary" id="btnSaveFarmer"><i class="fas fa-check"></i> Save Farmer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ──────────────── MODAL 2: FARMER PROFILE DETAILS ──────────────── -->
+  <div class="modal-backdrop" id="farmerProfileModal">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fas fa-id-card" style="color: var(--accent);"></i> Farmer Profile</h3>
+        <button class="modal-close-btn" onclick="closeModal('farmerProfileModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="farmerProfileBody">
+        <div style="text-align: center; padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-action-secondary" onclick="closeModal('farmerProfileModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────────── MODAL 3: LOG FIELD ACTIVITY ──────────────── -->
+  <div class="modal-backdrop" id="activityModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fas fa-clipboard-check" style="color: var(--accent);"></i> Log Field Activity</h3>
+        <button class="modal-close-btn" onclick="closeModal('activityModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="activityForm" onsubmit="handleActivitySubmit(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Target Farm Plot *</label>
+              <select id="actFarmSelect" class="form-control" required>
+                <option value="">Select plot...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Type *</label>
+              <select id="actTypeSelect" class="form-control" required>
+                <option value="Farm Visit">Farm Visit</option>
+                <option value="Crop Inspection">Crop Inspection</option>
+                <option value="Planting">Planting</option>
+                <option value="Harvest">Harvest</option>
+                <option value="Irrigation">Irrigation</option>
+                <option value="Fertilizer Application">Fertilizer Application</option>
+                <option value="Soil Sampling">Soil Sampling</option>
+                <option value="Pest Treatment">Pest Treatment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Activity Date *</label>
+              <input type="date" id="actDate" class="form-control" required>
+            </div>
+            <div class="form-group full-width">
+              <label>Field Observations & Notes *</label>
+              <textarea id="actNotes" class="form-control" rows="3" required placeholder="Detailed notes from the field inspection or intervention..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Metric Key (Optional)</label>
+              <input type="text" id="actMetricKey" class="form-control" placeholder="e.g. yield_bags, severity_score">
+            </div>
+            <div class="form-group">
+              <label>Metric Value (Optional)</label>
+              <input type="text" id="actMetricVal" class="form-control" placeholder="e.g. 45, Moderate">
+            </div>
+          </div>
+          <div id="activityFormError" style="display: none; color: #ef4444; font-size: 0.85rem; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-top: 10px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-action-secondary" onclick="closeModal('activityModal')">Cancel</button>
+          <button type="submit" class="btn-action-primary" id="btnSaveActivity"><i class="fas fa-check"></i> Submit Activity</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ──────────────── MODAL 4: FARM CHRONOLOGICAL HISTORY TIMELINE ──────────────── -->
+  <div class="modal-backdrop" id="farmHistoryModal">
+    <div class="modal-box" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="historyModalTitle"><i class="fas fa-timeline" style="color: var(--accent);"></i> Farm History Timeline</h3>
+        <button class="modal-close-btn" onclick="closeModal('farmHistoryModal')"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="farmHistoryBody">
+        <div style="text-align: center; padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Loading chronological timeline...</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-action-secondary" onclick="closeModal('farmHistoryModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/api-config.js"></script>
+  <script src="js/offline-sync.js"></script>
+  <script src="js/shell.js"></script>
+  <script src="js/assistant-widget.js"></script>
+
+  <script>
+    // State management
+    let currentFarmersList = [];
+    let currentFarmsList = [];
+    let currentActivitiesList = [];
+    let searchDebounceTimer = null;
+    let leafletMap = null;
+
+    function getAuthToken() {
+      return window.AgroTrack ? window.AgroTrack.getAuthToken() : 'mock-token-admin';
+    }
+
+    function getActiveRole() {
+      return window.AgroTrack ? window.AgroTrack.getActiveRole() : { id: 'admin' };
+    }
+
+    // Tab Switching
+    function switchOpTab(tabName) {
+      document.querySelectorAll('.op-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.op-section').forEach(sec => sec.style.display = 'none');
+
+      const btn = Array.from(document.querySelectorAll('.op-tab-btn')).find(b => b.getAttribute('onclick').includes(tabName));
+      if (btn) btn.classList.add('active');
+
+      const sec = document.getElementById('section-' + tabName);
+      if (sec) sec.style.display = 'block';
+
+      if (tabName === 'map' && leafletMap) {
+        setTimeout(() => leafletMap.invalidateSize(), 200);
+      }
+    }
+
+    function switchWbTab(toolKey) {
+      document.querySelectorAll('.wb-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.wb-tool-pane').forEach(p => p.style.display = 'none');
+
+      const activeBtn = Array.from(document.querySelectorAll('.wb-tab-btn')).find(b => b.getAttribute('onclick').includes(toolKey));
+      if (activeBtn) activeBtn.classList.add('active');
+      const pane = document.getElementById('wb-' + toolKey);
+      if (pane) pane.style.display = 'block';
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // ── 1. Load Live Dashboard Statistics ─────────────────────────────────────
+    async function loadDashboardStats() {
+      try {
+        const res = await fetch('/api/v1/agrotrack/dashboard/stats', {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (res.ok) {
+          const stats = await res.json();
+          document.getElementById('kpiFarmers').textContent = stats.totalFarmers;
+          document.getElementById('kpiFarmersSub').textContent = `${stats.activeFarmers} active · ${stats.archivedFarmers} archived`;
+          document.getElementById('tabFarmerCount').textContent = stats.activeFarmers;
+
+          document.getElementById('kpiPlots').textContent = stats.totalFarms;
+          document.getElementById('kpiAcreageSub').textContent = `${stats.totalAcreage} acres total`;
+          document.getElementById('tabPlotCount').textContent = stats.totalFarms;
+
+          document.getElementById('kpiVisits').textContent = stats.totalVisits;
+          document.getElementById('kpiActivitiesSub').textContent = `${stats.totalActivities} activities recorded`;
+          document.getElementById('tabActivityCount').textContent = stats.totalActivities;
+
+          const cropsList = Object.keys(stats.activeCropsCount || {});
+          document.getElementById('kpiCropsCount').textContent = cropsList.length;
+          document.getElementById('kpiCropsList').textContent = cropsList.join(', ') || 'None';
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    }
+
+    // ── 2. Farmer Directory & CRUD ──────────────────────────────────────────
+    function debounceFarmerSearch() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => loadFarmers(), 300);
+    }
+
+    function toggleMyAssignments(checked) {
+      loadFarmers();
+    }
+
+    async function loadFarmers() {
+      const tbody = document.getElementById('farmersTableBody');
+      const search = document.getElementById('farmerSearchInput').value.trim();
+      const statusFilter = document.getElementById('farmerStatusFilter').value;
+      const cropFilter = document.getElementById('farmerCropFilter').value;
+      const myOnly = document.getElementById('farmerMyAssignmentsOnly').checked;
+
+      let url = `/api/v1/agrotrack/farmers?status_filter=${encodeURIComponent(statusFilter)}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (cropFilter) url += `&crop=${encodeURIComponent(cropFilter)}`;
+      if (myOnly) {
+        // Amina Otieno is usr_field_003
+        const role = getActiveRole();
+        if (role.id === 'field') {
+          url += `&field_officer_id=usr_field_003`;
+        }
+      }
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Failed to load farmers');
+        const farmers = await res.json();
+        currentFarmersList = farmers;
+
+        if (farmers.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                <i class="fas fa-seedling" style="font-size: 1.5rem; margin-bottom: 8px; display: block;"></i>
+                No farmer records found matching the active filter criteria.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = farmers.map(f => {
+          const loc = f.location || {};
+          const locText = [loc.village, loc.ward].filter(Boolean).join(', ') || 'Coordinates only';
+          const isArchived = f.status === 'archived';
+          const statusBadge = isArchived
+            ? `<span class="status-pill archived"><i class="fas fa-box-archive"></i> Archived</span>`
+            : `<span class="status-pill active"><i class="fas fa-circle-check"></i> Active</span>`;
+
+          const projectsHtml = (f.enrolledProjectIds || []).map(p => {
+            const shortName = p.replace('proj_gv_', '').replace('proj_hl_', '');
+            return `<span class="tag-chip">${shortName}</span>`;
+          }).join('') || '<span style="color:var(--text-muted); font-size:0.75rem;">None</span>';
+
+          const archiveActionBtn = isArchived
+            ? `<button class="btn-action-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="restoreFarmer('${f.id}')" title="Restore Farmer Record"><i class="fas fa-rotate-left"></i> Restore</button>`
+            : `<button class="btn-action-secondary" style="padding: 4px 8px; font-size: 0.75rem; color: #f59e0b;" onclick="archiveFarmer('${f.id}')" title="Archive Farmer Record"><i class="fas fa-box-archive"></i> Archive</button>`;
+
+          return `
+            <tr>
+              <td><strong style="color: var(--accent);">${f.farmerCode || f.id}</strong></td>
+              <td>
+                <div style="font-weight: 600; color: var(--text-primary);">${f.firstName} ${f.lastName}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${f.nationalId || 'N/A'}</div>
+              </td>
+              <td>
+                <div style="font-size: 0.85rem;"><i class="fas fa-phone" style="font-size:0.7rem; color:var(--text-muted);"></i> ${f.phone || 'No phone'}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fas fa-map-marker-alt" style="font-size:0.7rem;"></i> ${locText}</div>
+              </td>
+              <td>${projectsHtml}</td>
+              <td><span style="font-weight: 600;">${f.plotCount || 0}</span> plots</td>
+              <td><strong style="color: var(--text-primary);">${f.totalAcreage || 0}</strong> acres</td>
+              <td>${statusBadge}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <button class="btn-action-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="viewFarmerProfile('${f.id}')" title="View Full Profile"><i class="fas fa-eye"></i></button>
+                <button class="btn-action-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="editFarmer('${f.id}')" title="Edit Farmer"><i class="fas fa-pen"></i></button>
+                ${archiveActionBtn}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:24px;">${err.message}</td></tr>`;
+      }
+    }
+
+    function openFarmerModal(farmer = null) {
+      const role = getActiveRole();
+      if (role.id === 'viewer') {
+        alert('Permission Denied: Viewer role has read-only access.');
+        return;
+      }
+      document.getElementById('farmerForm').reset();
+      document.getElementById('farmerFormError').style.display = 'none';
+
+      if (farmer) {
+        document.getElementById('farmerModalTitle').innerHTML = '<i class="fas fa-pen" style="color: var(--accent);"></i> Edit Farmer Record';
+        document.getElementById('editFarmerId').value = farmer.id;
+        document.getElementById('fFirstName').value = farmer.firstName || '';
+        document.getElementById('fLastName').value = farmer.lastName || '';
+        document.getElementById('fNationalId').value = farmer.nationalId || '';
+        document.getElementById('fFarmerCode').value = farmer.farmerCode || '';
+        document.getElementById('fPhone').value = farmer.phone || '';
+        document.getElementById('fGender').value = farmer.gender || '';
+        const loc = farmer.location || {};
+        document.getElementById('fWard').value = loc.ward || '';
+        document.getElementById('fVillage').value = loc.village || '';
+        document.getElementById('fLat').value = loc.latitude !== undefined && loc.latitude !== null ? loc.latitude : '';
+        document.getElementById('fLng').value = loc.longitude !== undefined && loc.longitude !== null ? loc.longitude : '';
+        document.getElementById('fOfficer').value = farmer.assignedFieldOfficerId || 'usr_field_003';
+        if (farmer.enrolledProjectIds && farmer.enrolledProjectIds.length > 0) {
+          document.getElementById('fProject').value = farmer.enrolledProjectIds[0];
+        }
+      } else {
+        document.getElementById('farmerModalTitle').innerHTML = '<i class="fas fa-user-plus" style="color: var(--accent);"></i> Register Farmer';
+        document.getElementById('editFarmerId').value = '';
+      }
+      openModal('farmerModal');
+    }
+
+    function editFarmer(farmerId) {
+      const f = currentFarmersList.find(x => x.id === farmerId);
+      if (f) {
+        openFarmerModal(f);
+      }
+    }
+
+    async function handleFarmerSubmit(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('farmerFormError');
+      errBox.style.display = 'none';
+
+      const editId = document.getElementById('editFarmerId').value;
+      const latVal = document.getElementById('fLat').value;
+      const lngVal = document.getElementById('fLng').value;
+
+      let location = null;
+      if (document.getElementById('fWard').value || document.getElementById('fVillage').value || latVal || lngVal) {
+        location = {
+          ward: document.getElementById('fWard').value || null,
+          village: document.getElementById('fVillage').value || null,
+          latitude: latVal !== "" ? parseFloat(latVal) : null,
+          longitude: lngVal !== "" ? parseFloat(lngVal) : null
+        };
+      }
+
+      const payload = {
+        firstName: document.getElementById('fFirstName').value.trim(),
+        lastName: document.getElementById('fLastName').value.trim(),
+        nationalId: document.getElementById('fNationalId').value.trim() || null,
+        farmerCode: document.getElementById('fFarmerCode').value.trim() || null,
+        phone: document.getElementById('fPhone').value.trim() || null,
+        gender: document.getElementById('fGender').value || null,
+        location: location,
+        assignedFieldOfficerId: document.getElementById('fOfficer').value || null,
+        enrolledProjectIds: [document.getElementById('fProject').value].filter(Boolean)
+      };
+
+      const url = editId ? `/api/v1/agrotrack/farmers/${editId}` : `/api/v1/agrotrack/farmers`;
+      const method = editId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || 'Failed to save farmer record');
+        }
+
+        closeModal('farmerModal');
+        loadFarmers();
+        loadDashboardStats();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    async function archiveFarmer(farmerId) {
+      if (!confirm('Are you sure you want to archive this farmer record? (Record is preserved and can be restored)')) return;
+      try {
+        const res = await fetch(`/api/v1/agrotrack/farmers/${farmerId}/archive`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not archive farmer');
+        loadFarmers();
+        loadDashboardStats();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function restoreFarmer(farmerId) {
+      try {
+        const res = await fetch(`/api/v1/agrotrack/farmers/${farmerId}/restore`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not restore farmer');
+        loadFarmers();
+        loadDashboardStats();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // ── 3. Farmer Profile Drawer ─────────────────────────────────────────────
+    async function viewFarmerProfile(farmerId) {
+      openModal('farmerProfileModal');
+      const body = document.getElementById('farmerProfileBody');
+      body.innerHTML = '<div style="text-align: center; padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Loading farmer profile & aggregated telemetry...</div>';
+
+      try {
+        const res = await fetch(`/api/v1/agrotrack/farmers/${farmerId}/profile`, {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not retrieve farmer profile');
+        const data = await res.json();
+        const f = data.farmer;
+        const plots = data.farms || data.associatedFarms || [];
+        const activities = data.activities || data.recentActivities || [];
+        const scans = data.scans || data.recentScans || [];
+
+        const loc = f.location || {};
+        const locCoords = (loc.latitude && loc.longitude) ? `${loc.latitude}, ${loc.longitude}` : 'No GPS set';
+
+        let plotsHtml = plots.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No plots registered for this farmer yet.</p>' : plots.map(p => `
+          <div style="background:var(--bg-base); border:1px solid var(--border-subtle); padding:12px; border-radius:var(--radius-sm); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="color:var(--text-primary);">${p.name}</strong> (${p.size} ${p.unit})
+              <div style="font-size:0.75rem; color:var(--text-muted);">Crop: ${p.crop} · Soil: ${p.soil} · Irrigation: ${p.irrigation}</div>
+            </div>
+            <button class="btn-action-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="viewFarmHistory('${p.id}', '${p.name}')">
+              <i class="fas fa-timeline"></i> Timeline
+            </button>
+          </div>
+        `).join('');
+
+        let activitiesHtml = activities.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No field activities logged on this farmer\'s plots yet.</p>' : activities.map(a => `
+          <div style="background:var(--bg-base); border:1px solid var(--border-subtle); padding:10px 12px; border-radius:var(--radius-sm); margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span class="act-badge visit">${a.activityType}</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);">${a.activityDate}</span>
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-primary);">${a.notes}</div>
+          </div>
+        `).join('');
+
+        let scansHtml = scans.length === 0 ? '<p style="color:var(--text-muted); font-size:0.85rem;">No leaf diagnostic scans recorded.</p>' : scans.map(s => `
+          <div style="background:var(--bg-base); border:1px solid var(--border-subtle); padding:8px 12px; border-radius:var(--radius-sm); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="font-weight:600; color:var(--text-primary); font-size:0.85rem;">${s.crop || 'Crop Leaf'}</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);"> — ${s.predicted_class || 'Inspected'}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${s.timestamp || ''}</span>
+          </div>
+        `).join('');
+
+        body.innerHTML = `
+          <div class="profile-hero">
+            <div class="profile-avatar-circle">${f.firstName.charAt(0)}${f.lastName.charAt(0)}</div>
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="margin: 0; font-size: 1.25rem; color: var(--text-primary);">${f.firstName} ${f.lastName}</h3>
+                <span class="status-pill active">${f.status}</span>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                Farmer Code: <strong style="color:var(--accent);">${f.farmerCode}</strong> · National ID: ${f.nationalId || 'N/A'}
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-details-grid">
+            <div class="detail-card">
+              <div class="detail-label">Phone & Contact</div>
+              <div class="detail-val">${f.phone || 'None recorded'}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Location (Ward / Village)</div>
+              <div class="detail-val">${loc.village || 'N/A'}, ${loc.ward || 'N/A'}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">GPS Geolocation</div>
+              <div class="detail-val" style="font-size: 0.8rem;">${locCoords}</div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-label">Assigned Field Officer</div>
+              <div class="detail-val" style="color: #38bdf8;">${f.assignedFieldOfficerId || 'Amina Otieno'}</div>
+            </div>
+          </div>
+
+          <h4 style="margin: 18px 0 8px 0; color: var(--text-primary); font-size: 0.95rem;"><i class="fas fa-layer-group" style="color:var(--accent);"></i> Linked Farm Plots (${plots.length})</h4>
+          ${plotsHtml}
+
+          <h4 style="margin: 18px 0 8px 0; color: var(--text-primary); font-size: 0.95rem;"><i class="fas fa-clipboard-list" style="color:#c084fc;"></i> Recent Field Activities (${activities.length})</h4>
+          ${activitiesHtml}
+
+          <h4 style="margin: 18px 0 8px 0; color: var(--text-primary); font-size: 0.95rem;"><i class="fas fa-camera" style="color:#38bdf8;"></i> Recent Leaf Disease Scans (${scans.length})</h4>
+          ${scansHtml}
+        `;
+      } catch (err) {
+        body.innerHTML = `<div style="color:#ef4444; padding:20px;">Error: ${err.message}</div>`;
+      }
+    }
+
+    // ── 4. Field Activities & Logging ─────────────────────────────────────────
+    function openActivityModal() {
+      const role = getActiveRole();
+      if (role.id === 'viewer') {
+        alert('Permission Denied: Viewer role has read-only access.');
+        return;
+      }
+      document.getElementById('activityForm').reset();
+      document.getElementById('activityFormError').style.display = 'none';
+      document.getElementById('actDate').value = new Date().toISOString().split('T')[0];
+
+      // Populate farm plots dropdown
+      const sel = document.getElementById('actFarmSelect');
+      sel.innerHTML = '<option value="">Select plot...</option>' + currentFarmsList.map(f => `
+        <option value="${f.id}">${f.name} (${f.crop}, ${f.size} ${f.unit})</option>
+      `).join('');
+
+      openModal('activityModal');
+    }
+
+    async function handleActivitySubmit(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('activityFormError');
+      errBox.style.display = 'none';
+
+      const farmId = document.getElementById('actFarmSelect').value;
+      const farm = currentFarmsList.find(x => x.id === farmId);
+
+      let metrics = null;
+      const k = document.getElementById('actMetricKey').value.trim();
+      const v = document.getElementById('actMetricVal').value.trim();
+      if (k && v) {
+        metrics = { [k]: isNaN(Number(v)) ? v : Number(v) };
+      }
+
+      const payload = {
+        farmId: farmId,
+        farmerId: farm ? farm.farmerId : null,
+        activityType: document.getElementById('actTypeSelect').value,
+        activityDate: document.getElementById('actDate').value,
+        notes: document.getElementById('actNotes').value.trim(),
+        metrics: metrics
+      };
+
+      // Check if browser is offline before attempting network request
+      if (!navigator.onLine) {
+        if (window.agrotrackOfflineSync) {
+          window.agrotrackOfflineSync.queueActivity(payload);
+          closeModal('activityModal');
+          if (typeof window.showDashboardNotification === 'function') {
+            window.showDashboardNotification('Network offline. Field activity queued locally on your device.', 'warning');
+          } else {
+            alert('Working offline: Field activity has been securely stored on your device and will synchronize automatically when connectivity is restored.');
+          }
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch('/api/v1/agrotrack/activities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || 'Failed to log field activity');
+        }
+
+        closeModal('activityModal');
+        loadActivities();
+        loadDashboardStats();
+      } catch (err) {
+        // Fallback: If network dropped during fetch, safely enqueue offline
+        if (window.agrotrackOfflineSync && (!navigator.onLine || err.message.includes('fetch') || err.message.includes('Network'))) {
+          window.agrotrackOfflineSync.queueActivity(payload);
+          closeModal('activityModal');
+          alert('Network connection lost during submission. Activity has been saved to your offline queue and will automatically synchronize when connectivity returns.');
+          return;
+        }
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    // Refresh view when background offline sync completes
+    document.addEventListener('agrotrack:sync-complete', () => {
+      loadActivities();
+      loadDashboardStats();
+    });
+
+    async function loadActivities() {
+      const tbody = document.getElementById('activitiesTableBody');
+      const typeFilter = document.getElementById('activityTypeFilter').value;
+      const farmFilter = document.getElementById('activityFarmFilter').value;
+      const myOnly = document.getElementById('activityMySubmittedOnly').checked;
+
+      let url = '/api/v1/agrotrack/activities?';
+      if (typeFilter) url += `activity_type=${encodeURIComponent(typeFilter)}&`;
+      if (farmFilter) url += `farm_id=${encodeURIComponent(farmFilter)}&`;
+      if (myOnly) {
+        const role = getActiveRole();
+        if (role.id === 'field') {
+          url += `responsible_user_id=usr_field_003&`;
+        }
+      }
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not load activities');
+        const activities = await res.json();
+        currentActivitiesList = activities;
+
+        if (activities.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">
+                No field activities matching active filters.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = activities.map(a => {
+          let badgeClass = 'other';
+          if (a.activityType.includes('Visit')) badgeClass = 'visit';
+          else if (a.activityType.includes('Inspection')) badgeClass = 'inspection';
+          else if (a.activityType.includes('Planting')) badgeClass = 'planting';
+          else if (a.activityType.includes('Harvest')) badgeClass = 'harvest';
+          else if (a.activityType.includes('Irrigation')) badgeClass = 'irrigation';
+          else if (a.activityType.includes('Fertilizer')) badgeClass = 'fertilizer';
+
+          let metricsText = '-';
+          if (a.metrics && Object.keys(a.metrics).length > 0) {
+            metricsText = Object.entries(a.metrics).map(([k, v]) => `<span class="tag-chip">${k}: ${v}</span>`).join(' ');
+          }
+
+          return `
+            <tr>
+              <td><span style="font-weight:600; color:var(--text-primary); font-size:0.85rem;">${a.activityDate}</span></td>
+              <td><span class="act-badge ${badgeClass}">${a.activityType}</span></td>
+              <td><strong style="color:var(--text-primary);">${a.farmName || a.farmId}</strong></td>
+              <td>${a.farmerName || a.farmerId || 'N/A'}</td>
+              <td><span style="color:#38bdf8; font-size:0.85rem;">${a.responsibleUserName || a.responsibleUserId}</span></td>
+              <td><span style="font-size:0.85rem; color:var(--text-primary);">${a.notes || ''}</span></td>
+              <td>${metricsText}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:24px;">${err.message}</td></tr>`;
+      }
+    }
+
+    // ── 5. Farm Plots & Chronological Timeline ────────────────────────────────
+    async function loadFarms() {
+      const tbody = document.getElementById('plotsTableBody');
+      try {
+        const res = await fetch('/api/v1/agrotrack/farms', {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not load farm plots');
+        const farms = await res.json();
+        currentFarmsList = farms;
+
+        // Populate farm filter dropdown
+        const farmSel = document.getElementById('activityFarmFilter');
+        if (farmSel) {
+          farmSel.innerHTML = '<option value="">All Farm Plots</option>' + farms.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        }
+
+        // Populate Leaflet Map Markers
+        if (leafletMap) {
+          document.getElementById('plotCounterBadge').textContent = `${farms.length} Plots Tracked`;
+          const markerGroup = [];
+          farms.forEach(f => {
+            if (f.location && f.location.latitude && f.location.longitude) {
+              const marker = L.marker([f.location.latitude, f.location.longitude]).addTo(leafletMap);
+              marker.bindPopup(`
+                <div style="font-weight:700; color:#22c55e; margin-bottom:4px;">${f.name}</div>
+                <div style="font-size:12px; color:#cbd5e1; line-height:1.4;">
+                  <strong>Crop:</strong> ${f.crop} (${f.size} ${f.unit || 'acres'})<br>
+                  <strong>Soil:</strong> ${f.soil} · <strong>Irrigation:</strong> ${f.irrigation}<br>
+                  <strong>Farmer ID:</strong> ${f.farmerId || 'Unassigned'}<br>
+                  <a href="javascript:void(0)" onclick="viewFarmHistory('${f.id}', '${f.name}')" style="color:#22c55e; font-weight:600; display:inline-block; margin-top:6px;">View Plot Timeline &rarr;</a>
+                </div>
+              `);
+              markerGroup.push([f.location.latitude, f.location.longitude]);
+            }
+          });
+          if (markerGroup.length > 0) {
+            leafletMap.fitBounds(markerGroup, { padding: [50, 50] });
+          }
+        }
+
+        if (farms.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-muted);">No farm plots registered yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = farms.map(f => {
+          const loc = f.location || {};
+          const coords = (loc.latitude && loc.longitude) ? `${loc.latitude}, ${loc.longitude}` : (loc.name || 'N/A');
+          return `
+            <tr>
+              <td><strong style="color:var(--text-primary);">${f.name}</strong></td>
+              <td><span style="color:var(--accent); font-weight:600;">${f.farmerId || 'Unassigned'}</span></td>
+              <td><span style="font-size:0.75rem; color:var(--text-muted);"><i class="fas fa-location-crosshairs"></i> ${coords}</span></td>
+              <td><strong>${f.size}</strong> ${f.unit || 'acres'}</td>
+              <td><span class="tag-chip" style="color:var(--accent);">${f.crop}</span></td>
+              <td><span style="font-size:0.8rem;">${f.soil} · ${f.irrigation}</span></td>
+              <td><span class="status-pill active">${f.status}</span></td>
+              <td style="text-align:right;">
+                <button class="btn-action-secondary" style="padding:4px 10px; font-size:0.75rem;" onclick="viewFarmHistory('${f.id}', '${f.name}')">
+                  <i class="fas fa-timeline"></i> Timeline
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:24px;">${err.message}</td></tr>`;
+      }
+    }
+
+    async function viewFarmHistory(farmId, farmName) {
+      openModal('farmHistoryModal');
+      document.getElementById('historyModalTitle').innerHTML = `<i class="fas fa-timeline" style="color: var(--accent);"></i> History Timeline: ${farmName}`;
+      const body = document.getElementById('farmHistoryBody');
+      body.innerHTML = '<div style="text-align: center; padding: 32px;"><i class="fas fa-spinner fa-spin"></i> Aggregating chronological field timeline...</div>';
+
+      try {
+        const res = await fetch(`/api/v1/agrotrack/farms/${farmId}/history`, {
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        if (!res.ok) throw new Error('Could not load farm history');
+        const data = await res.json();
+        const events = data.timeline || [];
+
+        if (events.length === 0) {
+          body.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:24px;">No chronological events recorded for this plot yet.</p>';
+          return;
+        }
+
+        body.innerHTML = `
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Plot: <strong>${data.farm.name}</strong> · Crop: <strong>${data.farm.crop}</strong> · Farmer ID: <strong>${data.farm.farmerId}</strong>
+          </div>
+          <div class="history-timeline">
+            ${events.map(ev => {
+              let icon = 'fa-circle';
+              let title = ev.title;
+              if (ev.type === 'planting') icon = 'fa-seedling';
+              else if (ev.type === 'activity') icon = 'fa-clipboard-check';
+              else if (ev.type === 'scan') icon = 'fa-microscope';
+              else if (ev.type === 'expense') icon = 'fa-receipt';
+
+              return `
+                <div class="timeline-node">
+                  <div class="timeline-node-dot"><i class="fas ${icon}"></i></div>
+                  <div class="timeline-node-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                      <strong style="color:var(--text-primary); font-size:0.88rem;">${title}</strong>
+                      <span style="font-size:0.75rem; color:var(--text-muted);">${ev.date}</span>
+                    </div>
+                    <div style="font-size:0.82rem; color:var(--text-secondary);">${ev.description || ''}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } catch (err) {
+        body.innerHTML = `<div style="color:#ef4444; padding:20px;">Error: ${err.message}</div>`;
+      }
+    }
+
+    // ── 6. Agricultural Intelligence Tools ──────────────────────────────────
+    async function runDiseaseRisk() {
+      const output = document.getElementById("riskOutput");
+      output.style.display = "block";
+      output.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Analyzing meteorological data...";
+
+      const payload = {
+        crop: document.getElementById("riskCrop").value,
+        temperature: parseFloat(document.getElementById("riskTemp").value),
+        humidity: parseFloat(document.getElementById("riskHum").value),
+        precipitation: parseFloat(document.getElementById("riskPrecip").value)
+      };
+
+      try {
+        const res = await fetch("/api/v1/agrotrack/disease-risk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getAuthToken()}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const badgeColor = data.overall_risk_level === "High Risk" ? "#ef4444" : data.overall_risk_level === "Moderate Risk" ? "#f59e0b" : "#22c55e";
+        output.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="margin: 0; color: #f8fafc;">Risk Assessment: ${data.crop}</h4>
+            <span style="background: ${badgeColor}22; color: ${badgeColor}; border: 1px solid ${badgeColor}; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
+              ${data.overall_risk_level} (Score: ${data.risk_score}/100)
+            </span>
+          </div>
+          <div style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 10px;">
+            <strong>Identified Threats:</strong>
+            <ul style="margin: 6px 0 10px 20px; padding: 0;">
+              ${data.potential_threats.map(t => `<li><strong>${t.disease}:</strong> ${t.trigger}</li>`).join("")}
+            </ul>
+            <strong>Recommended Preventative Measures:</strong>
+            <ul style="margin: 6px 0 0 20px; padding: 0;">
+              ${data.preventative_measures.map(m => `<li>${m}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      } catch (e) {
+        output.innerHTML = `<span style="color: #ef4444;">Error: ${e.message}</span>`;
+      }
+    }
+
+    async function runIrrigation() {
+      const output = document.getElementById("irrigationOutput");
+      output.style.display = "block";
+      output.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Computing crop evapotranspiration...";
+
+      const payload = {
+        crop: document.getElementById("irrCrop").value,
+        soil_type: document.getElementById("irrSoil").value,
+        temperature: parseFloat(document.getElementById("irrTemp").value),
+        humidity: 50.0,
+        precipitation_24h: parseFloat(document.getElementById("irrPrecip").value),
+        irrigation_type: "Drip"
+      };
+
+      try {
+        const res = await fetch("/api/v1/agrotrack/irrigation-advice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getAuthToken()}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        output.innerHTML = `
+          <h4 style="color: #22c55e; margin: 0 0 8px 0;"><i class="fas fa-droplet"></i> Action: ${data.action} (${data.recommended_volume_mm} mm)</h4>
+          <p style="font-size: 0.88rem; color: #cbd5e1; margin: 0 0 6px 0;"><strong>Agronomic Justification:</strong> ${data.reason}</p>
+          <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 6px 0;"><strong>Optimal Application Window:</strong> ${data.optimal_window}</p>
+          <p style="font-size: 0.85rem; color: #94a3b8; margin: 0;"><strong>Soil Management Note:</strong> ${data.soil_drainage_note}</p>
+        `;
+      } catch (e) {
+        output.innerHTML = `<span style="color: #ef4444;">Error: ${e.message}</span>`;
+      }
+    }
+
+    async function runFertilizer() {
+      const output = document.getElementById("fertilizerOutput");
+      output.style.display = "block";
+      output.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Balancing soil nutrients...";
+
+      const payload = {
+        crop: document.getElementById("fertCrop").value,
+        n_percent: parseFloat(document.getElementById("fertN").value),
+        p_percent: parseFloat(document.getElementById("fertP").value),
+        k_percent: parseFloat(document.getElementById("fertK").value),
+        ph: 6.5
+      };
+
+      try {
+        const res = await fetch("/api/v1/agrotrack/fertilizer-advice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getAuthToken()}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        output.innerHTML = `
+          <h4 style="color: #22c55e; margin: 0 0 8px 0;">Soil Nutrient Prescription for ${data.crop}</h4>
+          <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
+            <strong>Calculated Deficits:</strong> Nitrogen: ${data.deficits.nitrogen_deficit}%, Phosphorus: ${data.deficits.phosphorus_deficit}%, Potassium: ${data.deficits.potassium_deficit}%
+          </div>
+          <div style="font-size: 0.85rem; color: #cbd5e1;">
+            <strong>Prescriptions:</strong>
+            <ul style="margin: 6px 0 0 20px; padding: 0;">
+              ${data.prescriptions.map(p => `<li><strong>${p.nutrient} (${p.severity}):</strong> ${p.product} at ${p.rate_per_acre} (${p.timing})</li>`).join("")}
+            </ul>
+          </div>
+        `;
+      } catch (e) {
+        output.innerHTML = `<span style="color: #ef4444;">Error: ${e.message}</span>`;
+      }
+    }
+
+    async function runProfitability() {
+      const output = document.getElementById("profitabilityOutput");
+      output.style.display = "block";
+      output.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Simulating farm yields and ROI...";
+
+      const payload = {
+        crop: document.getElementById("profCrop").value,
+        acreage: parseFloat(document.getElementById("profAcreage").value),
+        market_price_per_kg: parseFloat(document.getElementById("profPrice").value)
+      };
+
+      try {
+        const res = await fetch("/api/v1/agrotrack/profitability-simulation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getAuthToken()}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        output.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 6px;">
+            <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Expected Yield</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">${data.estimated_yield_total_kg.toLocaleString()} kg</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Gross Revenue</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e;">${data.currency} ${data.gross_revenue.toLocaleString()}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Est. Production Cost</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;">${data.currency} ${data.total_production_cost.toLocaleString()}</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">Net Profit (ROI)</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #38bdf8;">${data.currency} ${data.net_profit.toLocaleString()} (${data.return_on_investment_pct}%)</div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        output.innerHTML = `<span style="color: #ef4444;">Error: ${e.message}</span>`;
+      }
+    }
+
+    // ── 7. DOM Initialization ────────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Leaflet Map Initialization
+      const defaultCenter = [-0.1800, 36.0000];
+      leafletMap = L.map('fieldMap').setView(defaultCenter, 10);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(leafletMap);
+
+      // Role check for write buttons
+      const role = getActiveRole();
+      if (role.id === 'viewer') {
+        const topReg = document.getElementById('btnTopRegisterFarmer');
+        const topLog = document.getElementById('btnTopLogActivity');
+        if (topReg) {
+          topReg.style.opacity = '0.5';
+          topReg.title = 'Viewer role is read-only';
+        }
+        if (topLog) {
+          topLog.style.opacity = '0.5';
+          topLog.title = 'Viewer role is read-only';
+        }
+      }
+
+      // Initial Data Loads
+      await loadDashboardStats();
+      await loadFarmers();
+      await loadActivities();
+      await loadFarms();
+    });
+  </script>
+</body>
+</html>

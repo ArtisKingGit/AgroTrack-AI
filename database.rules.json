@@ -1,0 +1,76 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+
+        "farms": {
+          "$farmId": {
+            ".validate": "newData.hasChildren(['name', 'crop'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "crop": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "size": {
+              ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)"
+            },
+            "budget": {
+              ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)"
+            }
+          }
+        },
+
+        "expenses": {
+          "$expenseId": {
+            ".validate": "newData.hasChildren(['farmId', 'category', 'amount'])",
+            "amount": {
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "category": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "farmId": {
+              ".validate": "newData.isString()"
+            }
+          }
+        },
+
+        "scans": {
+          "$scanId": {
+            ".validate": "newData.hasChildren(['crop', 'disease'])",
+            "crop": {
+              ".validate": "newData.isString()"
+            },
+            "disease": {
+              ".validate": "newData.isString()"
+            }
+          }
+        },
+
+        "settings": {
+          ".validate": "newData.hasChildren()"
+        }
+      }
+    },
+
+    "organisations": {
+      "$orgId": {
+        ".read": "auth != null && root.child('organisations').child($orgId).child('members').child(auth.uid).exists()",
+        ".write": "auth != null && root.child('organisations').child($orgId).child('members').child(auth.uid).child('role').val() === 'admin'",
+
+        "members": {
+          "$memberUid": {
+            ".read": "auth != null && (auth.uid === $memberUid || root.child('organisations').child($orgId).child('members').child(auth.uid).exists())",
+            ".write": "auth != null && root.child('organisations').child($orgId).child('members').child(auth.uid).child('role').val() === 'admin'"
+          }
+        }
+      }
+    }
+  }
+}
