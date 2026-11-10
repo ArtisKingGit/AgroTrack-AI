@@ -77,7 +77,7 @@ GEMINI_TIMEOUT_SECONDS = 20
 
 
 app = FastAPI(
-    title="AgroTrack AI Platform API",
+    title="AgroFast Platform API",
     description="Agricultural Intelligence and Development Management Platform — Core Foundation API",
     version="1.0.0"
 )

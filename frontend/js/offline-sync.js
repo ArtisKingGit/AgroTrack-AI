@@ -1,5 +1,5 @@
 /**
- * AgroTrack AI — Field Operations Offline Synchronisation Engine
+ * AgroFast — Field Operations Offline Synchronisation Engine
  * Provides resilient client-side offline queueing, conflict detection,
  * idempotency tracking, tenant/user binding, exponential backoff, and network recovery sync.
  * Restyled with authentic AgroFast slate glassmorphism & emerald green visual identity.
@@ -325,7 +325,7 @@
     } else {
       pill.className = "sync-pill online";
       pill.innerHTML = `<i class="fas fa-circle-check"></i> <span>Online</span>`;
-      pill.title = "Connected to AgroTrack AI server. All data synchronized.";
+      pill.title = "Connected to AgroFast server. All data synchronized.";
     }
   }
 
@@ -489,7 +489,7 @@
 
   window.addEventListener("offline", () => {
     updateUI();
-    showSyncToast("Network disconnected. AgroTrack is now working offline.", true);
+    showSyncToast("Network disconnected. AgroFast is now working offline.", true);
   });
 
   document.addEventListener("DOMContentLoaded", () => {

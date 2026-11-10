@@ -1,4 +1,4 @@
-# AgroTrack AI
+# AgroFast
 ### Agricultural Intelligence & Development Management Platform
 
 [![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
@@ -6,7 +6,7 @@
 [![Tests](https://img.shields.io/badge/tests-99%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-Proprietary-darkgreen.svg)]()
 
-AgroTrack AI is an enterprise agricultural intelligence and development management platform designed for agricultural cooperatives, agribusinesses, donor programs, and smallholder farmer networks.
+AgroFast is a comprehensive smart farming, agricultural intelligence, and development management agricultural intelligence and development management platform designed for agricultural cooperatives, agribusinesses, donor programs, and smallholder farmer networks.
 
 The platform unifies on-the-ground farmer management, real-time value-chain commodity intelligence, monitoring and evaluation (M&E) project tracking, and grounded cross-module AI analytics into a single multi-tenant workspace.
 
@@ -14,11 +14,11 @@ The platform unifies on-the-ground farmer management, real-time value-chain comm
 
 ## 1. Core Platform Capabilities
 
-AgroTrack AI integrates four primary modules alongside the preserved AgroFast computer vision intelligence core:
+AgroFast integrates four primary modules alongside the preserved AgroFast computer vision intelligence core:
 
 ```mermaid
 graph TD
-    User["Field Officers • Project Managers • Analysts • Admins"] --> Shell["AgroTrack AI Unified Shell & RBAC"]
+    User["Field Officers • Project Managers • Analysts • Admins"] --> Shell["AgroFast Unified Shell & RBAC"]
     
     Shell --> AgroTrack["1. AgroTrack<br/>(Farms, Farmers, Field Activities, Offline Sync)"]
     Shell --> MarketLens["2. MarketLens<br/>(Commodities, Prices, Spatial Arbitrage, Research)"]
@@ -37,7 +37,7 @@ graph TD
     AIAnalyst -.->|Diagnostic History| Engine
 ```
 
-### 1. AgroTrack — Farm & Field Operations
+### 1. AgroFast — Farm & Field Operations
 - **Farmer Management**: Comprehensive farmer registration, national ID deduplication, gender demographics, GPS validation, and soft-archive lifecycle.
 - **Farm Management**: Farm plots linked to farmers, acreage tracking, soil classification, irrigation type, and soil NPK nutrient levels.
 - **Field Activity Tracking**: Structured logging for farm visits, crop canopy inspections, planting, harvesting, irrigation runs, and fertilizer applications.

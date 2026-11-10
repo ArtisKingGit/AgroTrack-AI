@@ -35,7 +35,7 @@ async def get_client_config():
         "environment": ENVIRONMENT,
         "allowDevMockAuth": ALLOW_DEV_MOCK_AUTH,
         "version": "1.0.0",
-        "platform": "AgroTrack AI"
+        "platform": "AgroFast"
     }
 
 # ── In-Memory Default Data (Non-destructive, demo/default organisation) ───────

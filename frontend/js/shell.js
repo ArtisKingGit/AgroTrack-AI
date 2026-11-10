@@ -1,7 +1,7 @@
 /**
- * AgroTrack AI Shared Shell & Navigation Controller
- * Manages the persistent sidebar, topbar, user profile, role switcher, and auth state.
- * Preserves authentic AgroFast visual identity and colours.
+ * AgroFast Shared Shell & Navigation Controller
+ * Manages the persistent AgroFast sidebar, topbar, user profile, role switcher, and auth state.
+ * Preserves authentic AgroFast visual identity and colours and prioritizes AgroFast core navigation first.
  * Development-only role switcher gating (hidden in production mode).
  */
 
@@ -42,7 +42,7 @@
   // Detect current page from URL
   function getCurrentPage() {
     const path = window.location.pathname.split("/").pop();
-    return path || "overview.html";
+    return path || "dashboard.html";
   }
 
   function renderSidebar(activePage, currentRole) {
@@ -51,82 +51,78 @@
 
     sidebarEl.className = "app-sidebar";
     sidebarEl.innerHTML = `
-      <a href="overview.html" class="sidebar-brand">
-        <div class="brand-icon">
-          <i class="fas fa-leaf"></i>
-        </div>
-        <div class="brand-text">
-          <h1>AgroTrack AI</h1>
-          <span>Agri-Intelligence Platform</span>
-        </div>
+      <a href="dashboard.html" class="sidebar-logo" style="text-decoration: none;">
+        <img src="AgroFast%20Logo.jpg" alt="Logo">
+        <span>AgroFast</span>
       </a>
 
-      <div class="sidebar-org">
-        <div class="org-label">Active Organisation</div>
-        <div class="org-card">
-          <div class="org-badge">
-            <i class="fas fa-building"></i>
-          </div>
-          <div class="org-info">
-            <div class="org-name" id="shellOrgName">GreenValley AgTech</div>
-            <div class="org-tier"><i class="fas fa-shield-halved"></i> Enterprise Tier</div>
-          </div>
-        </div>
+      <div class="profile">
+        <img id="shellUserAvatar" src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentRole.name)}&background=22c55e&color=fff" alt="Profile">
+        <p id="shellUserName">${currentRole.name}</p>
+        <span id="shellUserRole" style="color: ${currentRole.badgeColor};">${currentRole.label}</span>
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-section-title">Core Platform</div>
-        
-        <a href="overview.html" class="nav-item ${activePage === "overview.html" ? "active" : ""}">
-          <i class="fas fa-chart-pie"></i>
-          <span>Overview</span>
+        <a href="dashboard.html" class="nav-item ${activePage === "dashboard.html" ? "active" : ""}">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
         </a>
 
-        <div class="nav-section-title">Capabilities</div>
-
-        <a href="track.html" class="nav-item ${activePage === "track.html" || activePage === "manage.html" || activePage === "dashboard.html" ? "active" : ""}">
+        <a href="recommendations.html" class="nav-item ${activePage === "recommendations.html" ? "active" : ""}">
           <i class="fas fa-seedling"></i>
-          <span>AgroTrack</span>
-          <span class="nav-tag tag-active">Active</span>
+          <span>Recommendations</span>
+        </a>
+
+        <a href="manage.html" class="nav-item ${activePage === "manage.html" ? "active" : ""}">
+          <i class="fas fa-tractor"></i>
+          <span>Manage Farms</span>
+        </a>
+
+        <a href="expenses.html" class="nav-item ${activePage === "expenses.html" ? "active" : ""}">
+          <i class="fas fa-wallet"></i>
+          <span>Expenses</span>
+        </a>
+
+        <a href="dashboard.html" class="nav-item">
+          <i class="fas fa-expand"></i>
+          <span>Crop Scanner</span>
+        </a>
+
+        <a href="history.html" class="nav-item ${activePage === "history.html" ? "active" : ""}">
+          <i class="fas fa-history"></i>
+          <span>History</span>
+        </a>
+
+        <a href="track.html" class="nav-item ${activePage === "track.html" ? "active" : ""}">
+          <i class="fas fa-users-gear"></i>
+          <span>Field Operations</span>
         </a>
 
         <a href="marketlens.html" class="nav-item ${activePage === "marketlens.html" ? "active" : ""}">
           <i class="fas fa-chart-line"></i>
-          <span>MarketLens</span>
-          <span class="nav-tag tag-active">Active</span>
+          <span>Market Intelligence</span>
         </a>
 
         <a href="impactos.html" class="nav-item ${activePage === "impactos.html" ? "active" : ""}">
           <i class="fas fa-hands-holding-circle"></i>
-          <span>ImpactOS</span>
-          <span class="nav-tag tag-active">Active</span>
+          <span>Projects & Impact</span>
         </a>
 
         <a href="analyst.html" class="nav-item ${activePage === "analyst.html" ? "active" : ""}">
           <i class="fas fa-brain"></i>
           <span>AI Analyst</span>
-          <span class="nav-tag tag-active">Active</span>
         </a>
 
-        <div class="nav-section-title">Administration</div>
-
         <a href="settings.html" class="nav-item ${activePage === "settings.html" ? "active" : ""}">
-          <i class="fas fa-gear"></i>
+          <i class="fas fa-cog"></i>
           <span>Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-profile-widget">
-          <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(currentRole.name)}&background=020617&color=22c55e" alt="Profile" class="user-avatar" id="shellUserAvatar">
-          <div class="user-meta">
-            <div class="user-name" id="shellUserName">${currentRole.name}</div>
-            <span class="user-role-badge" style="background: rgba(34, 197, 94, 0.15); color: ${currentRole.badgeColor};">${currentRole.label}</span>
-          </div>
-          <button class="logout-btn" id="shellLogoutBtn" title="Log Out">
-            <i class="fas fa-arrow-right-from-bracket"></i>
-          </button>
-        </div>
+        <button class="logout-btn" id="shellLogoutBtn" title="Log Out" style="width: 100%; justify-content: center; gap: 8px; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 14px; background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+          <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+        </button>
       </div>
     `;
 
@@ -145,19 +141,18 @@
     if (!topbarEl) return;
 
     const pageTitles = {
-      "overview.html": "Platform Overview",
-      "track.html": "AgroTrack — Farm & Field Operations",
-      "marketlens.html": "MarketLens — Market Intelligence",
-      "impactos.html": "ImpactOS — Projects & Impact",
-      "analyst.html": "AI Analyst — Agri-Intelligence Layer",
-      "settings.html": "Settings & Platform Config"
+      "overview.html": "Executive Overview",
+      "track.html": "Field Operations",
+      "marketlens.html": "Market Intelligence",
+      "impactos.html": "Projects & Impact",
+      "analyst.html": "AI Analyst",
+      "settings.html": "Settings"
     };
 
-    const title = pageTitles[activePage] || "AgroTrack AI";
+    const title = pageTitles[activePage] || "AgroFast";
 
     let roleControlHtml = "";
     if (clientConfig.allowDevMockAuth) {
-      // Development mode: role switcher enabled for testing
       roleControlHtml = `
         <label for="roleSwitcher" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
           <i class="fas fa-user-shield"></i> <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">DEV</span> Role:
@@ -167,7 +162,6 @@
         </select>
       `;
     } else {
-      // Production mode: strictly read-only authenticated role display
       roleControlHtml = `
         <div style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); background: rgba(15, 23, 42, 0.7); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);">
           <i class="fas fa-shield-halved" style="color: #22c55e;"></i>
@@ -183,7 +177,7 @@
           <i class="fas fa-bars"></i>
         </button>
         <div class="breadcrumbs">
-          <span>AgroTrack AI</span> <i class="fas fa-chevron-right" style="font-size: 0.65rem; margin: 0 6px;"></i> <span class="current">${title}</span>
+          <a href="dashboard.html" style="color: var(--text-muted); text-decoration: none; font-weight: 600;">AgroFast</a> <i class="fas fa-chevron-right" style="font-size: 0.65rem; margin: 0 6px;"></i> <span class="current">${title}</span>
         </div>
       </div>
 
@@ -239,11 +233,13 @@
     }
   });
 
-  // Expose API helper
-  window.AgroTrack = {
+  // Expose API helper under both AgroFast and AgroTrack aliases
+  const apiHelper = {
     getActiveRole,
     setActiveRole,
     getAuthToken: () => localStorage.getItem("agrotrack-auth-token") || getActiveRole().token,
     getConfig: () => clientConfig
   };
+  window.AgroFast = apiHelper;
+  window.AgroTrack = apiHelper;
 })();
